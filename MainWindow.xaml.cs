@@ -1,22 +1,22 @@
-﻿using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using Galileo6;
+﻿using System.Windows;
+using System.Collections.Generic;
+using Galileo6;   // Galileo DLL (ReadData)
 
 namespace GalileoDataLab
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Galileo Data Lab - Main Window
     /// </summary>
     public partial class MainWindow : Window
     {
+        // =========================================================
+        // Assessment 4.1:
+        // Two global LinkedList<double> data structures only.
+        // No other data structures are used.
+        // =========================================================
+        private LinkedList<double> sensorA = new LinkedList<double>(); // Sensor A
+        private LinkedList<double> sensorB = new LinkedList<double>(); // Sensor B
+
         public MainWindow()
         {
             InitializeComponent();
