@@ -33,14 +33,16 @@ namespace GalileoDataLab
         {
             const int SIZE = 400;
 
+            if (!double.TryParse(txtSigma.Text, out double sigma) ||
+                !double.TryParse(txtMu.Text, out double mu))
+            {
+                MessageBox.Show("Invalid numeric input for Sigma or Mu.");
+                return;
+            }
+
             sensorA.Clear();
             sensorB.Clear();
 
-            // Using UI values (Sigma/Mu controls)
-            double sigma = Convert.ToDouble(txtSigma.Text);
-            double mu = Convert.ToDouble(txtMu.Text);
-
-            // Galileo DLL instance created inside the method 
             ReadData galileo = new ReadData();
 
             for (int i = 0; i < SIZE; i++)
