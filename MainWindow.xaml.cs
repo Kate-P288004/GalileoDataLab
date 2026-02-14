@@ -21,5 +21,35 @@ namespace GalileoDataLab
         {
             InitializeComponent();
         }
+
+
+        // =========================================================
+        // Assessment 4.2 - LoadData()
+        // - Uses Galileo DLL
+        // - Populates both LinkedList<double> with 400 readings
+        // - No parameters, returns void
+        // =========================================================
+        private void LoadData()
+        {
+            const int SIZE = 400;
+
+            sensorA.Clear();
+            sensorB.Clear();
+
+            // Using UI values (Sigma/Mu controls)
+            double sigma = Convert.ToDouble(txtSigma.Text);
+            double mu = Convert.ToDouble(txtMu.Text);
+
+            // Galileo DLL instance created inside the method 
+            ReadData galileo = new ReadData();
+
+            for (int i = 0; i < SIZE; i++)
+            {
+                sensorA.AddLast(galileo.SensorA(mu, sigma));
+                sensorB.AddLast(galileo.SensorB(mu, sigma));
+            }
+        }
+
+
     }
 }
