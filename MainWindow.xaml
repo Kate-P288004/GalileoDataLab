@@ -83,15 +83,16 @@
 
                 <TextBlock Grid.Column="2" Text="Mu" VerticalAlignment="Center" FontWeight="SemiBold"/>
                 <TextBox Grid.Column="3" x:Name="txtMu" Text="50" Width="44" Margin="6,0,14,0"/>
-
                 <Button Grid.Column="4"
-                        x:Name="btnLoadData"
-                        Content="Load Sensor Data"
-                        Width="160"
-                        Height="30"
-                        Background="#BFD3FF"
-                        BorderBrush="#7F9CFF"
-                        FontWeight="SemiBold"/>
+        x:Name="btnLoadData"
+        Content="Load Sensor Data"
+        Width="160"
+        Height="30"
+        Click="btnLoadData_Click"
+        Background="#BFD3FF"
+        BorderBrush="#7F9CFF"
+        FontWeight="SemiBold"/>
+
             </Grid>
         </Border>
 

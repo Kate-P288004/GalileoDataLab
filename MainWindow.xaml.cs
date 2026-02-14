@@ -1,6 +1,8 @@
 ﻿using System.Windows;
 using System.Collections.Generic;
+using System.Windows.Controls;
 using Galileo6;   // Galileo DLL (ReadData)
+
 
 namespace GalileoDataLab
 {
@@ -51,6 +53,61 @@ namespace GalileoDataLab
                 sensorB.AddLast(galileo.SensorB(mu, sigma));
             }
         }
+
+        // Display one LinkedList in a ListBox
+        private void DisplayListboxData(LinkedList<double> list, ListBox target)
+        {
+            target.Items.Clear();
+
+            foreach (double value in list)
+            {
+                target.Items.Add(value.ToString("F4"));
+            }
+        }
+
+        // Display both sensor lists in the left ListView (two columns)
+        private void ShowAllSensorData()
+        {
+            lvSensors.Items.Clear();
+
+            var a = sensorA.First;
+            var b = sensorB.First;
+
+            while (a != null && b != null)
+            {
+                lvSensors.Items.Add(new
+                {
+                    SensorA = a.Value.ToString("F4"),
+                    SensorB = b.Value.ToString("F4")
+                });
+
+                a = a.Next;
+                b = b.Next;
+            }
+        }
+
+
+
+
+        private void btnLoadData_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                LoadData();
+
+                DisplayListboxData(sensorA, lbSensorA);
+                DisplayListboxData(sensorB, lbSensorB);
+                ShowAllSensorData();
+
+                txtStatus.Text = $"Status: Loaded A={sensorA.Count}, B={sensorB.Count}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Load Error");
+                txtStatus.Text = "Status: Error loading data";
+            }
+        }
+
 
 
     }
