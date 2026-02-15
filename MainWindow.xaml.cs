@@ -60,6 +60,19 @@ namespace GalileoDataLab
             }
         }
 
+
+        // =========================================================
+        // Assessment 4.5 – NumberOfNodes()
+        // Returns the number of nodes in a LinkedList
+        // =========================================================
+        private int NumberOfNodes(LinkedList<double> list)
+        {
+            int count = 0;
+            for (var node = list.First; node != null; node = node.Next)
+                count++;
+            return count;
+        }
+
         // =========================================================
         // DisplayListboxData()
         // Displays LinkedList<double> values in a ListBox
