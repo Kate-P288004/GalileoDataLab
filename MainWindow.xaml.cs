@@ -133,5 +133,57 @@ namespace GalileoDataLab
                 txtStatus.Text = "Status: Error loading data";
             }
         }
+
+        // =========================================================
+        // Assessment 4.7 – SelectionSort()
+        // ---------------------------------------------------------
+        // Sorts a LinkedList<double> in ascending order using
+        // the Selection Sort algorithm.
+        // 
+        // Input:
+        //   • LinkedList<double> list
+        // Return:
+        //   • Boolean (true if sort completed, false if not required)
+        //
+        // Constraints:
+        //   • No arrays or additional data structures
+        //   • Operates directly on LinkedList nodes
+        // =========================================================
+        private bool SelectionSort(LinkedList<double> list)
+        {
+            // If the list has fewer than two elements, sorting is not required
+            if (list == null || list.Count < 2)
+                return false;
+
+            // Outer loop moves the boundary of the unsorted section
+            for (LinkedListNode<double>? current = list.First;
+                 current != null;
+                 current = current.Next)
+            {
+                // Assume the current node contains the minimum value
+                LinkedListNode<double>? minNode = current;
+
+                // Inner loop searches for the smallest value in the remaining list
+                for (LinkedListNode<double>? scan = current.Next;
+                     scan != null;
+                     scan = scan.Next)
+                {
+                    if (scan.Value < minNode.Value)
+                    {
+                        minNode = scan;
+                    }
+                }
+
+                // Swap the values of the current node and the minimum node
+                double temp = current.Value;
+                current.Value = minNode.Value;
+                minNode.Value = temp;
+            }
+
+            return true;
+        }
+
+
+
     }
 }
