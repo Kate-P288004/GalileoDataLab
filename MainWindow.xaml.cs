@@ -155,9 +155,9 @@ namespace GalileoDataLab
             if (list == null || list.Count < 2)
                 return false;
 
-            // Outer loop moves the boundary of the unsorted section
+            // Iterate until the second-last node (last node will already be in place)
             for (LinkedListNode<double>? current = list.First;
-                 current != null;
+                 current != null && current.Next != null;
                  current = current.Next)
             {
                 // Assume the current node contains the minimum value
@@ -169,15 +169,16 @@ namespace GalileoDataLab
                      scan = scan.Next)
                 {
                     if (scan.Value < minNode.Value)
-                    {
                         minNode = scan;
-                    }
                 }
 
-                // Swap the values of the current node and the minimum node
-                double temp = current.Value;
-                current.Value = minNode.Value;
-                minNode.Value = temp;
+                // Swap the values only when a smaller value was found
+                if (!ReferenceEquals(minNode, current))
+                {
+                    double temp = current.Value;
+                    current.Value = minNode.Value;
+                    minNode.Value = temp;
+                }
             }
 
             return true;
@@ -235,6 +236,95 @@ namespace GalileoDataLab
             return true;
         }
 
+        // =========================================================
+        // Assessment 4.9 – BinarySearchIterative()
+        // ---------------------------------------------------------
+        // Parameters:
+        //   • LinkedList<double> list
+        //   • double searchValue
+        //   • int minimum
+        //   • int maximum
+        //
+        // Returns:
+        //   • int index of exact match, OR nearest neighbour index
+        // Notes:
+        //   • List must be sorted ascending before calling
+        //   • Uses indices because LinkedList has no random access
+        // =========================================================
+        private int BinarySearchIterative(LinkedList<double> list, double searchValue, int minimum, int maximum)
+        {
+            if (list == null) throw new ArgumentNullException(nameof(list));
+            if (list.Count == 0) return -1;
+
+            // Clamp bounds to valid index range
+            if (minimum < 0) minimum = 0;
+            if (maximum >= list.Count) maximum = list.Count - 1;
+
+            int low = minimum;
+            int high = maximum;
+
+            while (low <= high)
+            {
+                int mid = (low + high) / 2;
+                double midVal = GetValueAtIndex(list, mid);
+
+                if (midVal == searchValue)
+                    return mid;
+
+                if (searchValue < midVal)
+                    high = mid - 1;
+                else
+                    low = mid + 1;
+            }
+
+            // Not found: choose nearest neighbour index
+            // low is the insertion position, so candidates are low and low-1
+            if (low <= minimum) return minimum;
+            if (low >= maximum + 1) return maximum;
+
+            double rightVal = GetValueAtIndex(list, low);
+            double leftVal = GetValueAtIndex(list, low - 1);
+
+            double diffRight = Math.Abs(rightVal - searchValue);
+            double diffLeft = Math.Abs(leftVal - searchValue);
+
+            return (diffLeft <= diffRight) ? (low - 1) : low;
+        }
+
+        // =========================================================
+        // Helper – GetValueAtIndex()
+        // Returns the value at a specific index in a LinkedList
+        // =========================================================
+        private double GetValueAtIndex(LinkedList<double> list, int index)
+        {
+            if (list == null) throw new ArgumentNullException(nameof(list));
+            if (index < 0 || index >= list.Count) throw new ArgumentOutOfRangeException(nameof(index));
+
+            // Traverse from the closer end to reduce iterations
+            if (index <= list.Count / 2)
+            {
+                LinkedListNode<double>? node = list.First;
+                int i = 0;
+                while (node != null && i < index)
+                {
+                    node = node.Next;
+                    i++;
+                }
+                return node!.Value;
+            }
+            else
+            {
+                LinkedListNode<double>? node = list.Last;
+                int i = list.Count - 1;
+                while (node != null && i > index)
+                {
+                    node = node.Previous;
+                    i--;
+                }
+                return node!.Value;
+            }
+        }
 
     }
 }
+
