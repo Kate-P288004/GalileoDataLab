@@ -183,6 +183,57 @@ namespace GalileoDataLab
             return true;
         }
 
+        // =========================================================
+        // Assessment 4.8 – InsertionSort()
+        // ---------------------------------------------------------
+        // Sorts a LinkedList<double> in ascending order using
+        // the Insertion Sort algorithm.
+        //
+        // Input:
+        //   • LinkedList<double> list
+        // Return:
+        //   • Boolean (true if sort completed, false if not required)
+        //
+        // Constraints:
+        //   • No arrays or additional data structures
+        //   • Operates directly on LinkedList nodes
+        // =========================================================
+        private bool InsertionSort(LinkedList<double> list)
+        {
+            // If list is null or has fewer than two elements, no sort needed
+            if (list == null || list.Count < 2)
+                return false;
+
+            // Start from the second node
+            LinkedListNode<double>? node = list.First?.Next;
+
+            while (node != null)
+            {
+                // Save next node so we don't lose our place after shifting values
+                LinkedListNode<double>? nextNode = node.Next;
+                double key = node.Value;
+
+                // Scan left to find insertion point, shifting values to the right
+                LinkedListNode<double>? scan = node.Previous;
+                while (scan != null && scan.Value > key)
+                {
+                    // Move scan's value one step right
+                    scan.Next!.Value = scan.Value;
+                    scan = scan.Previous;
+                }
+
+                // Place key after scan (if scan is null, place at head)
+                if (scan == null)
+                    list.First!.Value = key;
+                else
+                    scan.Next!.Value = key;
+
+                // Continue from the saved next node
+                node = nextNode;
+            }
+
+            return true;
+        }
 
 
     }
