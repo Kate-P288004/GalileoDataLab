@@ -136,21 +136,7 @@ namespace GalileoDataLab
             }
         }
 
-        // =========================================================
-        // Assessment 4.7 – SelectionSort()
-        // ---------------------------------------------------------
-        // Sorts a LinkedList<double> in ascending order using
-        // the Selection Sort algorithm.
-        // 
-        // Input:
-        //   • LinkedList<double> list
-        // Return:
-        //   • Boolean (true if sort completed, false if not required)
-        //
-        // Constraints:
-        //   • No arrays or additional data structures
-        //   • Operates directly on LinkedList nodes
-        // =========================================================
+
         // =========================================================
         // Assessment 4.7 – SelectionSort()
         // Matches Appendix pseudo code (i, j, min, ElementAt + Find)
@@ -190,51 +176,32 @@ namespace GalileoDataLab
 
         // =========================================================
         // Assessment 4.8 – InsertionSort()
-        // ---------------------------------------------------------
-        // Sorts a LinkedList<double> in ascending order using
-        // the Insertion Sort algorithm.
-        //
-        // Input:
-        //   • LinkedList<double> list
-        // Return:
-        //   • Boolean (true if sort completed, false if not required)
-        //
-        // Constraints:
-        //   • No arrays or additional data structures
-        //   • Operates directly on LinkedList nodes
+        // Matches Appendix pseudo code (i, j, ElementAt + Find)
+        // Return type: Boolean
         // =========================================================
         private bool InsertionSort(LinkedList<double> list)
         {
-            // If list is null or has fewer than two elements, no sort needed
             if (list == null || list.Count < 2)
                 return false;
 
-            // Start from the second node
-            LinkedListNode<double>? node = list.First?.Next;
+            int max = NumberOfNodes(list); // integer max = numberOfNodes(list)
 
-            while (node != null)
+            for (int i = 0; i < max - 1; i++) // for ( i = 0 to max – 1 )
             {
-                // Save next node so we don't lose our place after shifting values
-                LinkedListNode<double>? nextNode = node.Next;
-                double key = node.Value;
-
-                // Scan left to find insertion point, shifting values to the right
-                LinkedListNode<double>? scan = node.Previous;
-                while (scan != null && scan.Value > key)
+                for (int j = i + 1; j > 0; j--) // for ( j = i + 1 to j > 0, j-- )
                 {
-                    // Move scan's value one step right
-                    scan.Next!.Value = scan.Value;
-                    scan = scan.Previous;
+                    if (list.ElementAt(j - 1) > list.ElementAt(j))
+                    {
+                        // Supplied C# code (Appendix)
+                        LinkedListNode<double> current = list.Find(list.ElementAt(j))!;
+                        LinkedListNode<double> previous = list.Find(list.ElementAt(j - 1))!;
+
+                        // Swap previous value with current value
+                        double temp = previous.Value;
+                        previous.Value = current.Value;
+                        current.Value = temp;
+                    }
                 }
-
-                // Place key after scan (if scan is null, place at head)
-                if (scan == null)
-                    list.First!.Value = key;
-                else
-                    scan.Next!.Value = key;
-
-                // Continue from the saved next node
-                node = nextNode;
             }
 
             return true;
@@ -242,92 +209,82 @@ namespace GalileoDataLab
 
         // =========================================================
         // Assessment 4.9 – BinarySearchIterative()
-        // ---------------------------------------------------------
-        // Parameters:
-        //   • LinkedList<double> list
-        //   • double searchValue
-        //   • int minimum
-        //   • int maximum
-        //
-        // Returns:
-        //   • int index of exact match, OR nearest neighbour index
-        // Notes:
-        //   • List must be sorted ascending before calling
-        //   • Uses indices because LinkedList has no random access
+        // Matches Appendix pseudo code exactly
         // =========================================================
-        private int BinarySearchIterative(LinkedList<double> list, double searchValue, int minimum, int maximum)
+        private int BinarySearchIterative(
+            LinkedList<double> list,
+            double searchValue,
+            int minimum,
+            int maximum)
         {
-            if (list == null) throw new ArgumentNullException(nameof(list));
-            if (list.Count == 0) return -1;
-
-            // Clamp bounds to valid index range
-            if (minimum < 0) minimum = 0;
-            if (maximum >= list.Count) maximum = list.Count - 1;
-
-            int low = minimum;
-            int high = maximum;
-
-            while (low <= high)
+            // while (minimum <= maximum - 1)
+            while (minimum <= maximum - 1)
             {
-                int mid = (low + high) / 2;
-                double midVal = GetValueAtIndex(list, mid);
+                // integer middle = minimum + maximum / 2
+                int middle = minimum + (maximum / 2);
 
-                if (midVal == searchValue)
-                    return mid;
-
-                if (searchValue < midVal)
-                    high = mid - 1;
+                // if (search value = list element(middle))
+                if (searchValue == list.ElementAt(middle))
+                {
+                    // return ++middle
+                    return ++middle;
+                }
+                // else if (search value < list element(middle))
+                else if (searchValue < list.ElementAt(middle))
+                {
+                    // maximum => middle - 1
+                    maximum = middle - 1;
+                }
                 else
-                    low = mid + 1;
+                {
+                    // minimum => middle + 1
+                    minimum = middle + 1;
+                }
             }
 
-            // Not found: choose nearest neighbour index
-            // low is the insertion position, so candidates are low and low-1
-            if (low <= minimum) return minimum;
-            if (low >= maximum + 1) return maximum;
-
-            double rightVal = GetValueAtIndex(list, low);
-            double leftVal = GetValueAtIndex(list, low - 1);
-
-            double diffRight = Math.Abs(rightVal - searchValue);
-            double diffLeft = Math.Abs(leftVal - searchValue);
-
-            return (diffLeft <= diffRight) ? (low - 1) : low;
+            // return minimum
+            return minimum;
         }
-
         // =========================================================
-        // Helper – GetValueAtIndex()
-        // Returns the value at a specific index in a LinkedList
+        // Assessment 4.10 – BinarySearchRecursive()
+        // Matches Appendix pseudo code (minimum, maximum, middle, comparisons)
         // =========================================================
-        private double GetValueAtIndex(LinkedList<double> list, int index)
+        private int BinarySearchRecursive(
+            LinkedList<double> list,
+            double searchValue,
+            int minimum,
+            int maximum)
         {
-            if (list == null) throw new ArgumentNullException(nameof(list));
-            if (index < 0 || index >= list.Count) throw new ArgumentOutOfRangeException(nameof(index));
+            // if (minimum <= maximum - 1)
+            if (minimum <= maximum - 1)
+            {
+                // integer middle = minimum + maximum / 2
+                int middle = minimum + (maximum / 2);
 
-            // Traverse from the closer end to reduce iterations
-            if (index <= list.Count / 2)
-            {
-                LinkedListNode<double>? node = list.First;
-                int i = 0;
-                while (node != null && i < index)
+                // if (search value = list element(middle))
+                if (searchValue == list.ElementAt(middle))
                 {
-                    node = node.Next;
-                    i++;
+                    // return middle
+                    return middle;
                 }
-                return node!.Value;
-            }
-            else
-            {
-                LinkedListNode<double>? node = list.Last;
-                int i = list.Count - 1;
-                while (node != null && i > index)
+                // else if (search value < list element(middle))
+                else if (searchValue < list.ElementAt(middle))
                 {
-                    node = node.Previous;
-                    i--;
+                    // return binarySearchRecursive(list, search value, minimum, middle - 1)
+                    return BinarySearchRecursive(list, searchValue, minimum, middle - 1);
                 }
-                return node!.Value;
+                else
+                {
+                    // return binarySearchRecursive(list, search value, middle + 1, maximum)
+                    return BinarySearchRecursive(list, searchValue, middle + 1, maximum);
+                }
             }
+
+            // return minimum
+            return minimum;
         }
+
+
 
     }
 }
