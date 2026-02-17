@@ -3,6 +3,8 @@ using System.Windows;
 using System.Collections.Generic;
 using System.Windows.Controls;
 using Galileo6;   // Galileo DLL (ReadData)
+using System.Linq;
+
 
 namespace GalileoDataLab
 {
@@ -149,40 +151,42 @@ namespace GalileoDataLab
         //   • No arrays or additional data structures
         //   • Operates directly on LinkedList nodes
         // =========================================================
+        // =========================================================
+        // Assessment 4.7 – SelectionSort()
+        // Matches Appendix pseudo code (i, j, min, ElementAt + Find)
+        // Return type: Boolean
+        // =========================================================
         private bool SelectionSort(LinkedList<double> list)
         {
-            // If the list has fewer than two elements, sorting is not required
             if (list == null || list.Count < 2)
                 return false;
 
-            // Iterate until the second-last node (last node will already be in place)
-            for (LinkedListNode<double>? current = list.First;
-                 current != null && current.Next != null;
-                 current = current.Next)
+            int min = 0;
+            int max = NumberOfNodes(list); // Appendix: max => numberOfNodes(list)
+
+            for (int i = 0; i < max - 1; i++)   // for ( i = 0 to max - 1 )
             {
-                // Assume the current node contains the minimum value
-                LinkedListNode<double>? minNode = current;
+                min = i;
 
-                // Inner loop searches for the smallest value in the remaining list
-                for (LinkedListNode<double>? scan = current.Next;
-                     scan != null;
-                     scan = scan.Next)
+                for (int j = i + 1; j < max; j++) // for ( j = i + 1 to max )
                 {
-                    if (scan.Value < minNode.Value)
-                        minNode = scan;
+                    if (list.ElementAt(j) < list.ElementAt(min))
+                        min = j;
                 }
 
-                // Swap the values only when a smaller value was found
-                if (!ReferenceEquals(minNode, current))
-                {
-                    double temp = current.Value;
-                    current.Value = minNode.Value;
-                    minNode.Value = temp;
-                }
+                // Supplied C# code (Appendix style)
+                LinkedListNode<double> currentMin = list.Find(list.ElementAt(min))!;
+                LinkedListNode<double> currentI = list.Find(list.ElementAt(i))!;
+
+                // Swap values
+                double temp = currentMin.Value;
+                currentMin.Value = currentI.Value;
+                currentI.Value = temp;
             }
 
             return true;
         }
+
 
         // =========================================================
         // Assessment 4.8 – InsertionSort()
