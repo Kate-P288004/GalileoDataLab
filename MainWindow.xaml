@@ -2,13 +2,14 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Data Processing"
-        Height="520"
-        Width="980"
+        Height="610"
+        Width="1040"
         MinHeight="520"
         MinWidth="980"
         Background="#F5F6FA">
 
     <Window.Resources>
+
         <!-- Group containers -->
         <Style TargetType="GroupBox">
             <Setter Property="Background" Value="#FFFFFF"/>
@@ -47,10 +48,22 @@
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
 
+        <!-- BRIGHT HIGHLIGHT -->
+        <Style TargetType="ListBoxItem">
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#FFFF00"/>
+                    <Setter Property="Foreground" Value="#000000"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Headers -->
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="#2E2E44"/>
         </Style>
+
     </Window.Resources>
 
     <Grid Margin="10">
@@ -60,14 +73,11 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- TOP BAR -->
-        <Border Grid.Row="0"
-                Background="#FFFFFF"
-                BorderBrush="#D0D3E2"
-                BorderThickness="1"
-                CornerRadius="6"
-                Padding="10"
-                Margin="0,0,0,8">
+        <!-- TOP -->
+        <Border Grid.Row="0" Background="#FFFFFF"
+                BorderBrush="#D0D3E2" BorderThickness="1"
+                CornerRadius="6" Padding="10" Margin="0,0,0,8">
+
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -78,25 +88,22 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="Sigma" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                <TextBlock Grid.Column="0" Text="Sigma" VerticalAlignment="Center"/>
                 <TextBox Grid.Column="1" x:Name="txtSigma" Text="10" Width="44" Margin="6,0,14,0"/>
 
-                <TextBlock Grid.Column="2" Text="Mu" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                <TextBlock Grid.Column="2" Text="Mu" VerticalAlignment="Center"/>
                 <TextBox Grid.Column="3" x:Name="txtMu" Text="50" Width="44" Margin="6,0,14,0"/>
-                <Button Grid.Column="4"
-        x:Name="btnLoadData"
-        Content="Load Sensor Data"
-        Width="160"
-        Height="30"
-        Click="btnLoadData_Click"
-        Background="#BFD3FF"
-        BorderBrush="#7F9CFF"
-        FontWeight="SemiBold"/>
 
+                <Button Grid.Column="4"
+                        x:Name="btnLoadData"
+                        Content="Load Sensor Data"
+                        Width="160"
+                        Height="30"
+                        Click="btnLoadData_Click"/>
             </Grid>
         </Border>
 
-        <!-- MAIN CONTENT -->
+        <!-- MAIN -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="260"/>
@@ -105,28 +112,24 @@
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0"
-        Background="#FFFFFF"
-        BorderBrush="#D0D3E2"
-        BorderThickness="1"
-        CornerRadius="6"
-        Padding="6"
-        Margin="0,0,8,0">
+                    Background="White"
+                    BorderBrush="#D0D3E2"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="6"
+                    Margin="0,0,8,0">
 
                 <ListView x:Name="lvSensors">
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="Sensor A"
-                                DisplayMemberBinding="{Binding SensorA}"
-                                Width="110"/>
+                                DisplayMemberBinding="{Binding SensorA}" Width="110"/>
                             <GridViewColumn Header="Sensor B"
-                                DisplayMemberBinding="{Binding SensorB}"
-                                Width="110"/>
+                                DisplayMemberBinding="{Binding SensorB}" Width="110"/>
                         </GridView>
                     </ListView.View>
                 </ListView>
-
             </Border>
-
 
             <!-- SENSOR A -->
             <GroupBox Grid.Column="1" Header="Sensor A" Margin="0,0,8,0">
@@ -136,30 +139,36 @@
                         <ColumnDefinition Width="220"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Data list -->
                     <ListBox Grid.Column="0" x:Name="lbSensorA"/>
 
-                    <!-- Controls -->
                     <StackPanel Grid.Column="1" Margin="8,0,0,0">
 
-                        <TextBlock Text="Binary Search Iterative" FontWeight="SemiBold"/>
-                        <Button x:Name="btnSearchAIter" Content="Search" Height="25" Click="btnSearchAIter_Click"/>
-                        <TextBox x:Name="txtTicksAIter" Height="22" IsReadOnly="True" Background="#F3F5FF"/>
+                        <TextBlock Text="Binary Search Iterative"/>
+                        <Button x:Name="btnSearchAIter"
+                                Content="Search"
+                                Click="btnSearchAIter_Click"/>
+                        <TextBox x:Name="txtTicksAIter" IsReadOnly="True"/>
 
-                        <TextBlock Text="Binary Search Recursive" FontWeight="SemiBold" Margin="0,6,0,0"/>
-                        <Button x:Name="btnSearchARec" Content="Search" Height="25" Click="btnSearchARec_Click"/>
-                        <TextBox x:Name="txtTicksARec" Height="22" IsReadOnly="True" Background="#F3F5FF"/>
+                        <TextBlock Text="Binary Search Recursive" Margin="0,6,0,0"/>
+                        <Button x:Name="btnSearchARec"
+                                Content="Search"
+                                Click="btnSearchARec_Click"/>
+                        <TextBox x:Name="txtTicksARec" IsReadOnly="True"/>
 
-                        <TextBlock Text="Search Target" FontWeight="SemiBold" Margin="0,6,0,0"/>
-                        <TextBox x:Name="txtSearchA" Height="22" />
+                        <TextBlock Text="Search Target" Margin="0,6,0,0"/>
+                        <TextBox x:Name="txtSearchA"/>
 
-                        <TextBlock Text="Selection Sort" FontWeight="SemiBold" Margin="0,6,0,0"/>
-                        <Button x:Name="btnSelSortA" Content="Sort" Height="25" Click="btnSelSortA_Click"/>
-                        <TextBox x:Name="txtMsSelA" Height="22" IsReadOnly="True" Background="#F3F5FF"/>
+                        <TextBlock Text="Selection Sort" Margin="0,6,0,0"/>
+                        <Button x:Name="btnSelSortA"
+                                Content="Sort"
+                                Click="btnSelSortA_Click"/>
+                        <TextBox x:Name="txtMsSelA" IsReadOnly="True"/>
 
-                        <TextBlock Text="Insertion Sort" FontWeight="SemiBold" Margin="0,6,0,0"/>
-                        <Button x:Name="btnInsSortA" Content="Sort" Height="25" Click="btnInsSortA_Click"/>
-                        <TextBox x:Name="txtMsInsA" Height="22" IsReadOnly="True" Background="#F3F5FF"/>
+                        <TextBlock Text="Insertion Sort" Margin="0,6,0,0"/>
+                        <Button x:Name="btnInsSortA"
+                                Content="Sort"
+                                Click="btnInsSortA_Click"/>
+                        <TextBox x:Name="txtMsInsA" IsReadOnly="True"/>
 
                     </StackPanel>
                 </Grid>
@@ -173,37 +182,43 @@
                         <ColumnDefinition Width="220"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Data list -->
                     <ListBox Grid.Column="0" x:Name="lbSensorB"/>
 
-                    <!-- Controls -->
                     <StackPanel Grid.Column="1" Margin="8,0,0,0">
 
-                        <TextBlock Text="Binary Search Iterative" FontWeight="SemiBold"/>
-                        <Button x:Name="btnSearchBIter" Content="Search" Height="25" Click="btnSearchBIter_Click"/>
-                        <TextBox x:Name="txtTicksBIter" Height="22" IsReadOnly="True" Background="#F3F5FF"/>
+                        <TextBlock Text="Binary Search Iterative"/>
+                        <Button x:Name="btnSearchBIter"
+                                Content="Search"
+                                Click="btnSearchBIter_Click"/>
+                        <TextBox x:Name="txtTicksBIter" IsReadOnly="True"/>
 
-                        <TextBlock Text="Binary Search Recursive" FontWeight="SemiBold" Margin="0,6,0,0"/>
-                        <Button x:Name="btnSearchBRec" Content="Search" Height="25" Click="btnSearchBRec_Click"/>
-                        <TextBox x:Name="txtTicksBRec" Height="22" IsReadOnly="True" Background="#F3F5FF"/>
+                        <TextBlock Text="Binary Search Recursive" Margin="0,6,0,0"/>
+                        <Button x:Name="btnSearchBRec"
+                                Content="Search"
+                                Click="btnSearchBRec_Click"/>
+                        <TextBox x:Name="txtTicksBRec" IsReadOnly="True"/>
 
-                        <TextBlock Text="Search Target" FontWeight="SemiBold" Margin="0,6,0,0"/>
-                        <TextBox x:Name="txtSearchB" Height="22"/>
+                        <TextBlock Text="Search Target" Margin="0,6,0,0"/>
+                        <TextBox x:Name="txtSearchB"/>
 
-                        <TextBlock Text="Selection Sort" FontWeight="SemiBold" Margin="0,6,0,0"/>
-                        <Button x:Name="btnSelSortB" Content="Sort" Height="25" Click="btnSelSortB_Click"/>
-                        <TextBox x:Name="txtMsSelB" Height="22" IsReadOnly="True" Background="#F3F5FF"/>
+                        <TextBlock Text="Selection Sort" Margin="0,6,0,0"/>
+                        <Button x:Name="btnSelSortB"
+                                Content="Sort"
+                                Click="btnSelSortB_Click"/>
+                        <TextBox x:Name="txtMsSelB" IsReadOnly="True"/>
 
-                        <TextBlock Text="Insertion Sort" FontWeight="SemiBold" Margin="0,6,0,0"/>
-                        <Button x:Name="btnInsSortB" Content="Sort" Height="25" Click="btnInsSortB_Click"/>
-                        <TextBox x:Name="txtMsInsB" Height="22" IsReadOnly="True" Background="#F3F5FF"/>
+                        <TextBlock Text="Insertion Sort" Margin="0,6,0,0"/>
+                        <Button x:Name="btnInsSortB"
+                                Content="Sort"
+                                Click="btnInsSortB_Click"/>
+                        <TextBox x:Name="txtMsInsB" IsReadOnly="True"/>
 
                     </StackPanel>
                 </Grid>
             </GroupBox>
         </Grid>
 
-        <!-- STATUS STRIP -->
+        <!-- STATUS -->
         <Border Grid.Row="2"
                 Background="#EEF1FF"
                 Padding="8"
@@ -211,9 +226,9 @@
                 BorderBrush="#C8CBE0"
                 BorderThickness="1"
                 Margin="0,8,0,0">
+
             <TextBlock x:Name="txtStatus"
                        Text="Status: Ready"
-                       Foreground="#3A3A5A"
                        FontWeight="SemiBold"/>
         </Border>
 
