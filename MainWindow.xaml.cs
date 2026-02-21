@@ -16,7 +16,7 @@ namespace GalileoDataLab
     /// Units: ICTPRG535 / ICTPRG547
     ///
     /// Purpose:
-    /// - Load satellite data via Galileo DLL
+    /// - Load satellite data via Galileo6 DLL
     /// - Store data in LinkedList<double> (Sensor A and Sensor B)
     /// - Sort using Selection Sort and Insertion Sort
     /// - Search using Binary Search (Iterative and Recursive)
@@ -26,19 +26,15 @@ namespace GalileoDataLab
     public partial class MainWindow : Window
     {
         // =========================================================
-        // Q4 REQUIREMENT:
-        // Only 2 global variables allowed
-        // LinkedList<double> for Sensor A and Sensor B
+        // Q4.1 – Global Data Structures
+        // Only 2 global variables allowed (Sensor A + Sensor B)
         // =========================================================
         private LinkedList<double> sensorA = new LinkedList<double>();
         private LinkedList<double> sensorB = new LinkedList<double>();
 
 
         // =========================================================
-        // Q4 UI SETUP
-        // Constructor initializes UI components
-        // SelectionMode.Extended required so neighbour values
-        // can be highlighted after search 
+        // UI Setup (Constructor)
         // =========================================================
         public MainWindow()
         {
@@ -620,10 +616,14 @@ namespace GalileoDataLab
         }
 
         // =========================================================
-        // SENSOR A - Binary Search Iterative
-        // Uses iterative binary search algorithm
-        // Displays elapsed ticks
+        // Q4.12 – Search Button Methods (ticks)
+        // - Validate integer input
+        // - Ensure list sorted before binary search
+        // - Measure ticks
+        // - Highlight index ±2
         // =========================================================
+
+        // SENSOR A – Binary Search Iterative
         private void btnSearchAIter_Click(object sender, RoutedEventArgs e)
         {
             // Validate numeric integer input
