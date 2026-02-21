@@ -322,7 +322,7 @@ namespace GalileoDataLab
             sw.Stop();
 
             // Display elapsed time in milliseconds (assessment requirement)
-            txtMsSelA.Text = sw.ElapsedMilliseconds.ToString();
+            txtMsSelA.Text = sw.ElapsedMilliseconds + " ms";
 
             // Refresh Sensor A ListBox to show sorted values
             DisplayListboxData(sensorA, lbSensorA);
@@ -350,7 +350,7 @@ namespace GalileoDataLab
             sw.Stop();
 
             // Display execution time in milliseconds
-            txtMsInsA.Text = sw.ElapsedMilliseconds.ToString();
+            txtMsInsA.Text = sw.ElapsedMilliseconds + " ms";
 
             // Update UI so user can see sorted data
             DisplayListboxData(sensorA, lbSensorA);
@@ -376,7 +376,7 @@ namespace GalileoDataLab
             sw.Stop();
 
             // Display elapsed milliseconds
-            txtMsSelB.Text = sw.ElapsedMilliseconds.ToString();
+            txtMsSelB.Text = sw.ElapsedMilliseconds + " ms";
 
             // Refresh visual displays
             DisplayListboxData(sensorB, lbSensorB);
@@ -402,7 +402,7 @@ namespace GalileoDataLab
             sw.Stop();
 
             // Show sorting time in milliseconds
-            txtMsInsB.Text = sw.ElapsedMilliseconds.ToString();
+            txtMsInsB.Text = sw.ElapsedMilliseconds + " ms";
 
             // Refresh UI displays
             DisplayListboxData(sensorB, lbSensorB);
@@ -453,7 +453,7 @@ namespace GalileoDataLab
             sw.Stop();
 
             // Display processing time in ticks (Assessment requirement)
-            txtTicksAIter.Text = sw.ElapsedTicks.ToString();
+            txtTicksAIter.Text = sw.ElapsedTicks + " ticks";
 
             // Refresh ListBox display (ensures latest data shown)
             DisplayListboxData(sensorA, lbSensorA);
@@ -486,7 +486,7 @@ namespace GalileoDataLab
 
             sw.Stop();
 
-            txtTicksARec.Text = sw.ElapsedTicks.ToString();
+            txtTicksARec.Text = sw.ElapsedTicks + " ticks";
 
             DisplayListboxData(sensorA, lbSensorA);
 
@@ -515,7 +515,7 @@ namespace GalileoDataLab
 
             sw.Stop();
 
-            txtTicksBIter.Text = sw.ElapsedTicks.ToString();
+            txtTicksBIter.Text = sw.ElapsedTicks + " ticks";
 
             DisplayListboxData(sensorB, lbSensorB);
 
@@ -544,7 +544,7 @@ namespace GalileoDataLab
 
             sw.Stop();
 
-            txtTicksBRec.Text = sw.ElapsedTicks.ToString();
+            txtTicksBRec.Text = sw.ElapsedTicks+ " ticks";
 
             DisplayListboxData(sensorB, lbSensorB);
 
