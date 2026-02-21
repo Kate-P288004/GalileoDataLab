@@ -67,6 +67,23 @@ namespace GalileoDataLab
                 return;
             }
 
+            // =====================================================
+            // Assessment requirement: enforce numeric ranges
+            // Sigma: min 10, max 20 (default 10)
+            // Mu: min 35, max 75 (default 50)
+            // =====================================================
+            if (sigma < 10 || sigma > 20)
+            {
+                MessageBox.Show("Sigma must be between 10 and 20.");
+                return;
+            }
+
+            if (mu < 35 || mu > 75)
+            {
+                MessageBox.Show("Mu must be between 35 and 75.");
+                return;
+            }
+
             // Clear previous data
             sensorA.Clear();
             sensorB.Clear();
