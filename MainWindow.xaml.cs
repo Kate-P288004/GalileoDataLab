@@ -1,10 +1,11 @@
-﻿using Galileo6;   // Assessment requirement: external Galileo DLL
+﻿using Galileo6;   // Assessment requirement: external Galileo6 DLL
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace GalileoDataLab
 {
@@ -25,41 +26,49 @@ namespace GalileoDataLab
     public partial class MainWindow : Window
     {
         // =========================================================
-        // Assessment Q4: GLOBAL DATA STRUCTURES
-        //
-        // Requirement:
-        // - Only 2 global variables allowed
-        // - Must be LinkedList<double>
+        // Q4 REQUIREMENT:
+        // Only 2 global variables allowed
+        // LinkedList<double> for Sensor A and Sensor B
         // =========================================================
         private LinkedList<double> sensorA = new LinkedList<double>();
         private LinkedList<double> sensorB = new LinkedList<double>();
 
+
+        // =========================================================
+        // Q4 UI SETUP
+        // Constructor initializes UI components
+        // SelectionMode.Extended required so neighbour values
+        // can be highlighted after search 
+        // =========================================================
         public MainWindow()
         {
             InitializeComponent();
 
-            // Requirement for search highlighting range (target ±2):
-            // allow multi-selection in ListBoxes.
+            // Addede to enable multiple selection for neighbour highlighting
             lbSensorA.SelectionMode = SelectionMode.Extended;
             lbSensorB.SelectionMode = SelectionMode.Extended;
         }
 
+
         // =========================================================
-        // Assessment Q4.2 — LoadData()
-        //
-        // Purpose:
-        // - Creates Galileo DLL instance INSIDE this method
-        // - Generates exactly 400 readings
-        // - Populates Sensor A and Sensor B LinkedLists
-        //
-        // Inputs: none
-        // Output: void
+        // Q4.2 – LoadData()
+        // Assessment Requirement:
+        // - Method name must be LoadData
+        // - No input parameters
+        // - Return type = void
+        // - Create Galileo6 DLL instance inside method
+        // - Populate both LinkedLists (Sensor A + Sensor B)
+        // - Hardcoded dataset size = 400
+        // - Validate Sigma range (10–20)
+        // - Validate Mu range (35–75)
         // =========================================================
         private void LoadData()
         {
-            const int SIZE = 400; // Requirement: fixed size
+            const int SIZE = 400;   //Fixed dataset size
 
-            // Validate Sigma and Mu numeric inputs
+            // -----------------------------------------------------
+            // Validate numeric input (Sigma & Mu)
+            // -----------------------------------------------------
             if (!double.TryParse(txtSigma.Text, out double sigma) ||
                 !double.TryParse(txtMu.Text, out double mu))
             {
@@ -67,31 +76,42 @@ namespace GalileoDataLab
                 return;
             }
 
-            // =====================================================
-            // Assessment requirement: enforce numeric ranges
-            // Sigma: min 10, max 20 (default 10)
-            // Mu: min 35, max 75 (default 50)
-            // =====================================================
+            // -----------------------------------------------------
+            // Sigma validation 
+            // Range: 10 to 20
+            // -----------------------------------------------------
             if (sigma < 10 || sigma > 20)
             {
                 MessageBox.Show("Sigma must be between 10 and 20.");
                 return;
             }
 
+            // -----------------------------------------------------
+            // Mu validation 
+            // Range: 35 to 75
+            // -----------------------------------------------------
             if (mu < 35 || mu > 75)
             {
                 MessageBox.Show("Mu must be between 35 and 75.");
                 return;
             }
 
-            // Clear previous data
+            // -----------------------------------------------------
+            // Clear existing sensor data before loading new values
+            // -----------------------------------------------------
             sensorA.Clear();
             sensorB.Clear();
 
-            // Required: Galileo DLL created INSIDE method
+            // -----------------------------------------------------
+            // Galileo6 DLL instance created
+            // -----------------------------------------------------
             ReadData galileo = new ReadData();
 
-            // Populate LinkedLists
+            // -----------------------------------------------------
+            // Generate exactly 400 readings for each sensor
+            // SensorA -to LinkedList sensorA
+            // SensorB -to LinkedList sensorB
+            // -----------------------------------------------------
             for (int i = 0; i < SIZE; i++)
             {
                 sensorA.AddLast(galileo.SensorA(mu, sigma));
@@ -100,224 +120,300 @@ namespace GalileoDataLab
         }
 
         // =========================================================
-        // Assessment Q4.5 — NumberOfNodes()
-        //
+        // Q4.5 – NumberOfNodes()
+        // Assessment Requirement:
+        // - Method name must be NumberOfNodes
+        // - Input parameter: LinkedList<double>
+        // - Return type: int
+        // - Must manually count nodes (no direct Count usage)
         // Purpose:
-        // - Counts total elements in LinkedList
-        //
-        // Input: LinkedList<double>
-        // Output: int node count
+        // - Returns total number of elements in the LinkedList
+        // - Used by sorting and searching algorithms
         // =========================================================
         private int NumberOfNodes(LinkedList<double> list)
         {
             int count = 0;
 
-            // Traverse nodes manually (assessment expectation)
             for (var node = list.First; node != null; node = node.Next)
                 count++;
 
             return count;
         }
-
         // =========================================================
-        // Utility Method — DisplayListboxData()
+        // HELPER METHOD: GetNodeAt()
+        // ---------------------------------------------------------
+        // Purpose:
+        // - Returns node at a specific index position
+        // - Fixes sorting/search issues when duplicate values exist
+        // Used in:
+        // - Selection Sort
+        // - Insertion Sort
+        // - Binary Search 
+        // =========================================================
+        private LinkedListNode<double> GetNodeAt(LinkedList<double> list, int index)
+        {
+            // Safety check to prevent invalid index access
+            if (index < 0 || index >= list.Count)
+                throw new ArgumentOutOfRangeException(nameof(index));
+
+            // Start from first node
+            var node = list.First;
+
+            // Move forward until required index is reached
+            for (int i = 0; i < index; i++)
+                node = node!.Next;
+
+            // Return node at requested position
+            return node!;
+        }
+        // =========================================================
+        // Q4.6 – DisplayListboxData()
+        // Assessment Requirement:
+        // - Method name must be DisplayListboxData
+        // - Input parameters:
+        //     1. LinkedList<double>
+        //     2. ListBox target
+        // - Return type: void
         //
         // Purpose:
-        // - Display LinkedList data in a ListBox
-        //
-        // Inputs:
-        // - list: LinkedList<double>
-        // - target: ListBox
+        // - Displays LinkedList values inside the selected ListBox
+        // - Used after sorting and searching operations
+        // - Formats values to 4 decimal places (sensor display)
         // =========================================================
         private void DisplayListboxData(LinkedList<double> list, ListBox target)
         {
+            // Clear previous display content
             target.Items.Clear();
 
+            // Add each LinkedList value to ListBox
             foreach (double value in list)
                 target.Items.Add(value.ToString("F4"));
         }
 
         // =========================================================
-        // Assessment Q4.3 — ShowAllSensorData()
+        // Q4.3 – ShowAllSensorData()
+        // Assessment Requirement:
+        // - Method name must be ShowAllSensorData
+        // - No input parameters
+        // - Return type: void
+        // - Display BOTH sensors in ListView
+        // - Columns required: Sensor A + Sensor B
         //
         // Purpose:
-        // - Display Sensor A + Sensor B side-by-side in ListView
-        // - Requires two columns: SensorA and SensorB
-        //
-        // Inputs: none
-        // Output: void
+        // - Displays paired sensor data side by side
+        // - Used after LoadData()
+        // - Used after sorting operations
         // =========================================================
         private void ShowAllSensorData()
         {
+            // Clear previous ListView rows
             lvSensors.Items.Clear();
 
+            // Start traversal at first node of each sensor list
             var a = sensorA.First;
             var b = sensorB.First;
 
+            // Traverse both LinkedLists together
             while (a != null && b != null)
             {
+                // Add combined row into ListView
                 lvSensors.Items.Add(new
                 {
                     SensorA = a.Value.ToString("F4"),
                     SensorB = b.Value.ToString("F4")
                 });
 
+                // Move to next nodes
                 a = a.Next;
                 b = b.Next;
             }
         }
-
         // =========================================================
-        // Utility: IsSorted()
+        // HELPER METHOD – IsSorted()
+        // Purpose:
+        // - Checks whether LinkedList data is sorted
+        // - Binary search requires ascending order data
         //
-        // Requirement:
-        // - Binary Search must only run on sorted data
-        // - No additional global variables are allowed
-        //
-        // Returns:
-        // - true if sorted ascending
-        // - false if any element is out of order
+        // Important:
+        // - Binary search compares rounded values (Math.Round)
+        // - Sorted check must follow the same comparison rule
         // =========================================================
         private bool IsSorted(LinkedList<double> list)
         {
+            // Empty or single-node list is always sorted
             if (list == null || list.Count < 2)
                 return true;
 
-            double previous = list.First.Value;
-            var node = list.First.Next;
+            // Store first value as starting comparison
+            double previous = Math.Round(list.First!.Value);
 
+            // Start from second node
+            var node = list.First!.Next;
+
+            // Traverse list node-by-node
             while (node != null)
             {
-                if (node.Value < previous)
+                // Round current value to match binary search rule
+                double current = Math.Round(node.Value);
+
+                // If current value is smaller → list NOT sorted
+                if (current < previous)
                     return false;
 
-                previous = node.Value;
+                // Move forward for next comparison
+                previous = current;
                 node = node.Next;
             }
 
+            // No ordering issues detected
             return true;
         }
 
         // =========================================================
-        // Utility: HighlightIndexWithNeighbours()
+        // HELPER METHOD – HighlightIndexWithNeighbours()
+        // Purpose:
+        // - Highlights search result and neighbouring values (index ±2)
+        // - Required for assessment search display behaviour
         //
-        // Requirement:
-        // - Highlight the search target and two values on each side
-        // - Works for range index-2 .. index+2
-        // - Uses ListBox multi-selection (Extended)
+        // Behaviour:
+        // - Clamps index within valid range
+        // - Highlights up to 5 values total
         // =========================================================
         private void HighlightIndexWithNeighbours(ListBox listBox, int index)
         {
+            // Enable multiple highlighted items
             listBox.SelectionMode = SelectionMode.Extended;
+
+            // Clear previous selection
             listBox.SelectedItems.Clear();
 
+            // Safety check if list is empty
             if (listBox.Items.Count == 0)
                 return;
 
-            // Clamp index into valid range
+            // Clamp index to valid bounds
             if (index < 0) index = 0;
             if (index >= listBox.Items.Count) index = listBox.Items.Count - 1;
 
+            // Calculate neighbour range (±2)
             int start = Math.Max(0, index - 2);
             int end = Math.Min(listBox.Items.Count - 1, index + 2);
 
+            // Highlight target value and surrounding nodes
             for (int i = start; i <= end; i++)
                 listBox.SelectedItems.Add(listBox.Items[i]);
 
+            // Scroll list so highlighted item is visible
             listBox.ScrollIntoView(listBox.Items[index]);
+
+            // Set focus for clear UI feedback
             listBox.Focus();
         }
 
         // =========================================================
-        // Load Data Button
+        // Q4.4 – Load Data Button Method
+        // Assessment Requirement:
+        // - Button click must call LoadData()
+        // - Display data in both ListBoxes
+        // - Display data in ListView
         //
-        // Calls:
-        // - LoadData()
-        // - DisplayListboxData()
-        // - ShowAllSensorData()
+        // Steps:
+        // 1. Load data using Galileo DLL
+        // 2. Display Sensor A list
+        // 3. Display Sensor B list
+        // 4. Show combined sensor view
+        // 5. Update status message
         // =========================================================
         private void btnLoadData_Click(object sender, RoutedEventArgs e)
         {
+            // Step 1: Populate LinkedLists with sensor data
             LoadData();
 
+            // Step 2: Show Sensor A values in ListBox
             DisplayListboxData(sensorA, lbSensorA);
+
+            // Step 3: Show Sensor B values in ListBox
             DisplayListboxData(sensorB, lbSensorB);
 
+            // Step 4: Display both sensors in ListView columns
             ShowAllSensorData();
 
+            // Step 5: User feedback message
             txtStatus.Text = "Status: Data loaded successfully";
         }
 
         // =========================================================
-        // Assessment Q4.7 — SelectionSort()
-        //
-        // Matches Appendix pseudo code:
-        // - min => i
-        // - max => numberOfNodes(list)
-        // - for i 0..max-1
-        // - for j i+1..max
-        // - Find() + ElementAt() and swap
-        //
-        // Return: bool
+        // Q4.7 – SelectionSort()
+        // Assessment Requirement:
+        // - Implement Selection Sort using Appendix pseudocode
+        // - Return type: bool
+        // - Sort LinkedList in ascending order
         // =========================================================
         private bool SelectionSort(LinkedList<double> list)
         {
+            // If list has fewer than 2 items, sorting is not required
             if (list.Count < 2) return false;
 
+            // Get total number of nodes 
             int max = NumberOfNodes(list);
 
+            // Outer loop: moves sorted boundary forward
             for (int i = 0; i < max - 1; i++)
             {
+                // Assume current index is minimum value
                 int min = i;
 
+                // Inner loop: search for smallest value in remaining list
                 for (int j = i + 1; j < max; j++)
                 {
+                    // Compare current value against known minimum
                     if (list.ElementAt(j) < list.ElementAt(min))
-                        min = j;
+                        min = j; // Update minimum index
                 }
 
-                // Appendix supplied style
-                LinkedListNode<double> currentMin = list.Find(list.ElementAt(min))!;
-                LinkedListNode<double> currentI = list.Find(list.ElementAt(i))!;
+                // prevents duplicate issues
+                var nodeMin = GetNodeAt(list, min);
+                var nodeI = GetNodeAt(list, i);
 
-                // swap values
-                double temp = currentMin.Value;
-                currentMin.Value = currentI.Value;
-                currentI.Value = temp;
+                // Swap values between current position and minimum
+                double temp = nodeMin.Value;
+                nodeMin.Value = nodeI.Value;
+                nodeI.Value = temp;
             }
 
+            // Sorting completed successfully
             return true;
         }
 
         // =========================================================
-        // Assessment Q4.8 — InsertionSort()
-        //
-        // Matches Appendix pseudo code:
-        // - max = numberOfNodes(list)
-        // - for i 0..max-1
-        // - for j i+1 down to > 0
-        // - compare (j-1) and (j)
-        // - Find() + ElementAt() and swap
-        //
-        // Return: bool
+        // Q4.8 – InsertionSort()
+        // Assessment Requirement:
+        // - Implement Insertion Sort using Appendix pseudocode
+        // - Return type: bool
+        // - Sort LinkedList in ascending order
         // =========================================================
         private bool InsertionSort(LinkedList<double> list)
         {
+            // If list has fewer than 2 items, sorting not required
             if (list.Count < 2) return false;
 
+            // Get total number of nodes in list
             int max = NumberOfNodes(list);
 
+            // Outer loop controls sorted portion growth
             for (int i = 0; i < max - 1; i++)
             {
+                // Inner loop moves current item backwards into correct position
                 for (int j = i + 1; j > 0; j--)
                 {
+                    // Compare adjacent values
                     if (list.ElementAt(j - 1) > list.ElementAt(j))
                     {
-                        // Appendix supplied node style
-                        LinkedListNode<double> current = list.Find(list.ElementAt(j))!;
-                        LinkedListNode<double> previous = list.Find(list.ElementAt(j - 1))!;
+                        // Retrieve nodes safely using helper method
+                        var current = GetNodeAt(list, j);
+                        var previous = GetNodeAt(list, j - 1);
 
-                        // Swap values (previous with current)
+                        // Swap adjacent values
                         double temp = previous.Value;
                         previous.Value = current.Value;
                         current.Value = temp;
@@ -325,24 +421,17 @@ namespace GalileoDataLab
                 }
             }
 
+            // Sorting finished
             return true;
         }
 
         // =========================================================
-        // Assessment Q4.9 — BinarySearchIterative()
-        //
-        // IMPORTANT: Appendix rules:
-        // - Calling code passes maximum = numberOfNodes(list) (COUNT)
-        // - while (minimum <= maximum - 1)
-        // - middle = minimum + maximum / 2
-        // - return ++middle when found (1-based index)
-        // - return minimum when not found
-        // =========================================================
-        // =========================================================
-        // BinarySearchIterative (safe and correct)
-        // - Works on sorted data only
-        // - maximum must be the LAST INDEX (Count - 1)
-        // - Returns found index, or nearest neighbour index
+        // Q4.9 – BinarySearchIterative()
+        // Assessment Requirement:
+        // - Iterative Binary Search implementation
+        // - Parameters: list, searchValue, minimum, maximum
+        // - maximum must be the last index (Count - 1)
+        // - Returns found index or nearest neighbour index
         // =========================================================
         private int BinarySearchIterative(
             LinkedList<double> list,
@@ -350,302 +439,401 @@ namespace GalileoDataLab
             int minimum,
             int maximum)
         {
+            // Continue searching while search range is valid
             while (minimum <= maximum)
             {
+                // Calculate middle index safely
                 int middle = minimum + ((maximum - minimum) / 2);
 
+                // Round value to match assessment comparison rule
                 double middleValue = Math.Round(list.ElementAt(middle));
 
+                // Exact match found
                 if (searchValue == middleValue)
                     return middle;
 
+                // Search left half if value is smaller
                 if (searchValue < middleValue)
                     maximum = middle - 1;
                 else
+                    // Otherwise search right half
                     minimum = middle + 1;
             }
 
-            return minimum; // nearest neighbour position
+            // Value not found to return nearest neighbour index
+            return minimum;
         }
 
         // =========================================================
-        // Assessment Q4.10 — BinarySearchRecursive()
-        //
-        // IMPORTANT: Appendix rules:
-        // - Calling code passes maximum = numberOfNodes(list) (COUNT)
-        // - if (minimum <= maximum - 1)
-        // - middle = minimum + maximum / 2
-        // - return middle when found
-        // - return minimum when not found
+        // Q4.10 – BinarySearchRecursive()
+        // Assessment Requirement:
+        // - Recursive Binary Search implementation
+        // - Parameters: list, searchValue, minimum, maximum
+        // - maximum must be last index (Count - 1)
+        // - Returns found index or nearest neighbour index
         // =========================================================
         public int BinarySearchRecursive(
-             LinkedList<double> list,
-             double searchValue,
-             int minimum,
-             int maximum)
+            LinkedList<double> list,
+            double searchValue,
+            int minimum,
+            int maximum)
         {
-            // Base case: range finished, return nearest neighbour position
+            // if value not found, return nearest position
             if (minimum > maximum)
                 return minimum;
 
-            // Correct midpoint calculation (prevents infinite recursion)
+            // Calculate middle index safely
             int middle = minimum + ((maximum - minimum) / 2);
 
+            // Round value to match search comparison rule
             double middleValue = Math.Round(list.ElementAt(middle));
 
+            // Exact match found
             if (searchValue == middleValue)
                 return middle;
 
+            // Search left half recursively
             if (searchValue < middleValue)
                 return BinarySearchRecursive(list, searchValue, minimum, middle - 1);
 
+            // Otherwise search right half recursively
             return BinarySearchRecursive(list, searchValue, middle + 1, maximum);
         }
+        // =========================================================
+        // Q4.11 – Sort Button Methods
+        // Assessment Requirement:
+        // - Start stopwatch before sort
+        // - Execute Selection or Insertion Sort
+        // - Stop stopwatch after sort
+        // - Display processing time (milliseconds)
+        // - Refresh ListBox and ListView displays
+        // =========================================================
 
         // =========================================================
-        // SORT BUTTONS — Stopwatch timing
-        //
-        // Requirement:
-        // - Measure sort performance in MILLISECONDS
-        // - Refresh ListBox and ListView after sorting
+        // SENSOR A – Selection Sort Button
+        // Purpose:
+        // - Executes SelectionSort() on Sensor A
+        // - Measures execution time in milliseconds
+        // - Refreshes UI after sorting
         // =========================================================
-
         private void btnSelSortA_Click(object sender, RoutedEventArgs e)
         {
+            // Start stopwatch BEFORE sorting 
             var sw = Stopwatch.StartNew();
+
+            // Execute Selection Sort algorithm
             SelectionSort(sensorA);
+
+            // Stop timing after sort completes
             sw.Stop();
 
+            // Display elapsed time in milliseconds
             txtMsSelA.Text = sw.ElapsedMilliseconds + " ms";
-            DisplayListboxData(sensorA, lbSensorA);
-            ShowAllSensorData();
 
+            // Refresh Sensor A ListBox display
+            DisplayListboxData(sensorA, lbSensorA);
+
+            // Refresh combined Sensor A + B ListView
+            ShowAllSensorData();
             txtStatus.Text = "Status: Sensor A Selection Sort completed";
         }
 
+        // =========================================================
+        // SENSOR A - Insertion Sort Button
+        // Measures execution time in milliseconds
+        // Updates UI after sorting
+        // =========================================================
         private void btnInsSortA_Click(object sender, RoutedEventArgs e)
         {
+            // Start stopwatch before sorting
             var sw = Stopwatch.StartNew();
+
+            // Call InsertionSort algorithm
             InsertionSort(sensorA);
+
+            // Stop timing
             sw.Stop();
 
-            // Fix: write Insertion Sort time into the correct textbox
+            // Display elapsed milliseconds
             txtMsInsA.Text = sw.ElapsedMilliseconds + " ms";
 
+            // Update Sensor A ListBox
             DisplayListboxData(sensorA, lbSensorA);
-            ShowAllSensorData();
 
+            // Update ListView with both sensors
+            ShowAllSensorData();
             txtStatus.Text = "Status: Sensor A Insertion Sort completed";
         }
 
+        // =========================================================
+        // SENSOR B - Selection Sort Button
+        // Executes SelectionSort on Sensor B
+        // Records processing time
+        // =========================================================
         private void btnSelSortB_Click(object sender, RoutedEventArgs e)
         {
+            // Start timing before sort
             var sw = Stopwatch.StartNew();
+
+            // Execute selection sort
             SelectionSort(sensorB);
+
+            // Stop timing
             sw.Stop();
 
+            // Display milliseconds in textbox
             txtMsSelB.Text = sw.ElapsedMilliseconds + " ms";
-            DisplayListboxData(sensorB, lbSensorB);
-            ShowAllSensorData();
 
+            // Refresh Sensor B ListBox
+            DisplayListboxData(sensorB, lbSensorB);
+
+            // Refresh paired sensor display
+            ShowAllSensorData();
             txtStatus.Text = "Status: Sensor B Selection Sort completed";
         }
 
+        // =========================================================
+        // SENSOR B - Insertion Sort Button
+        // Executes insertion sort and records time
+        // Updates UI components after completion
+        // =========================================================
         private void btnInsSortB_Click(object sender, RoutedEventArgs e)
         {
+            // Start stopwatch
             var sw = Stopwatch.StartNew();
+
+            // Execute insertion sort algorithm
             InsertionSort(sensorB);
+
+            // Stop timing
             sw.Stop();
 
+            // Display sort time in milliseconds
             txtMsInsB.Text = sw.ElapsedMilliseconds + " ms";
-            DisplayListboxData(sensorB, lbSensorB);
-            ShowAllSensorData();
 
+            // Refresh Sensor B ListBox data
+            DisplayListboxData(sensorB, lbSensorB);
+
+            // Refresh ListView display
+            ShowAllSensorData();
             txtStatus.Text = "Status: Sensor B Insertion Sort completed";
         }
 
         // =========================================================
-        // SEARCH BUTTONS — Stopwatch timing
-        //
-        // Requirement:
-        // - User enters integer value
-        // - Must check list is sorted BEFORE searching
-        // - Measure search performance in TICKS
-        // - Highlight target + 2 neighbours each side
+        // SENSOR A - Binary Search Iterative
+        // Uses iterative binary search algorithm
+        // Displays elapsed ticks
         // =========================================================
-
         private void btnSearchAIter_Click(object sender, RoutedEventArgs e)
         {
+            // Validate numeric integer input
             if (!int.TryParse(txtSearchA.Text, out int value))
             {
                 txtStatus.Text = "Status: Enter a valid integer for Sensor A";
                 return;
             }
 
+            // Binary search requires sorted data
             if (!IsSorted(sensorA))
             {
                 txtStatus.Text = "Status: Please sort Sensor A data first.";
                 return;
             }
 
+            // Determine maximum index in list
             int max = NumberOfNodes(sensorA) - 1;
 
+            // Start stopwatch before search
             var sw = Stopwatch.StartNew();
+
+            // Perform iterative binary search
             int index = BinarySearchIterative(sensorA, value, 0, max);
+
+            // Stop timing after search completes
             sw.Stop();
 
+            // Display execution time in ticks
             txtTicksAIter.Text = sw.ElapsedTicks + " ticks";
 
+            // Refresh list display
             DisplayListboxData(sensorA, lbSensorA);
+
+            // Highlight result and neighbour values
             HighlightIndexWithNeighbours(lbSensorA, index);
 
+            // Update status message
             txtStatus.Text = "Status: Sensor A Iterative Search completed";
         }
         // =========================================================
-        // Sensor A — Binary Search (Recursive)
-        // Requirement:
-        // - Validate integer input
-        // - Check data is sorted before Binary Search
-        // - Measure processing time in TICKS
-        // - Highlight found value + 2 neighbours on each side
+        // SENSOR A - Binary Search Recursive
+        // Uses recursive binary search algorithm
+        // Displays elapsed ticks
         // =========================================================
         private void btnSearchARec_Click(object sender, RoutedEventArgs e)
         {
-            // 1) Validate integer input (Sensor A textbox)
+            // Validate integer input
             if (!int.TryParse(txtSearchA.Text, out int value))
             {
                 txtStatus.Text = "Status: Enter a valid integer for Sensor A";
                 return;
             }
 
-            // 2) Binary Search only works on sorted data
+            // Ensure data is sorted before search
             if (!IsSorted(sensorA))
             {
                 txtStatus.Text = "Status: Please sort Sensor A data first.";
                 return;
             }
 
-            // 3) Set correct maximum index (last valid index)
+            // Maximum index for search range
             int max = NumberOfNodes(sensorA) - 1;
 
-            // 4) Measure performance in ticks
+            // Start timer
             var sw = Stopwatch.StartNew();
+
+            // Execute recursive binary search
             int index = BinarySearchRecursive(sensorA, value, 0, max);
+
+            // Stop timer
             sw.Stop();
 
-            // 5) Display ticks (required)
+            // Display search time (ticks)
             txtTicksARec.Text = sw.ElapsedTicks + " ticks";
 
-            // 6) Refresh ListBox contents
+            // Refresh ListBox display
             DisplayListboxData(sensorA, lbSensorA);
 
-            // 7) Highlight target ±2 neighbours (clamped inside helper)
+            // Highlight result up down 2 neighbours
             HighlightIndexWithNeighbours(lbSensorA, index);
 
+            // Status feedback
             txtStatus.Text = "Status: Sensor A Recursive Search completed";
         }
-
+        // =========================================================
+        // SENSOR B - Binary Search Iterative
+        // Performs iterative search on Sensor B
+        // Measures execution in ticks
+        // =========================================================
         private void btnSearchBIter_Click(object sender, RoutedEventArgs e)
         {
-            // 1) Validate integer input
+            // Validate input value
             if (!int.TryParse(txtSearchB.Text, out int value))
             {
                 txtStatus.Text = "Status: Enter a valid integer for Sensor B";
                 return;
             }
 
-            // 2) Binary search only works on sorted data
+            // Check sorting requirement
             if (!IsSorted(sensorB))
             {
                 txtStatus.Text = "Status: Please sort Sensor B data first.";
                 return;
             }
 
-            // 3) Last valid index
+            // Define search upper limit
             int max = NumberOfNodes(sensorB) - 1;
 
-            // 4) Measure performance in ticks
+            // Start stopwatch before search
             var sw = Stopwatch.StartNew();
+
+            // Execute iterative binary search
             int index = BinarySearchIterative(sensorB, value, 0, max);
+
+            // Stop timing
             sw.Stop();
 
-            // 5) Display ticks
+            // Display ticks in UI
             txtTicksBIter.Text = sw.ElapsedTicks + " ticks";
 
-            // 6) Refresh ListBox
+            // Refresh display
             DisplayListboxData(sensorB, lbSensorB);
 
-            // 7) Highlight target ±2 neighbours
+            // Highlight target area
             HighlightIndexWithNeighbours(lbSensorB, index);
 
+            // Update status
             txtStatus.Text = "Status: Sensor B Iterative Search completed";
         }
 
         // =========================================================
-        // Sensor B — Binary Search (Recursive)
-        // Requirement:
-        // - Validate integer input
-        // - Check data is sorted before Binary Search
-        // - Measure processing time in TICKS
-        // - Highlight found value + 2 neighbours on each side
+        // SENSOR B - Binary Search Recursive
+        // ---------------------------------------------------------
+        // Performs recursive search on Sensor B
+        // Shows elapsed ticks
         // =========================================================
         private void btnSearchBRec_Click(object sender, RoutedEventArgs e)
         {
-            // 1) Validate integer input (Sensor B textbox)
+            // Validate integer input
             if (!int.TryParse(txtSearchB.Text, out int value))
             {
                 txtStatus.Text = "Status: Enter a valid integer for Sensor B";
                 return;
             }
 
-            // 2) Binary Search only works on sorted data
+            // Ensure data is sorted
             if (!IsSorted(sensorB))
             {
                 txtStatus.Text = "Status: Please sort Sensor B data first.";
                 return;
             }
 
-            // 3) Set correct maximum index (last valid index)
+            // Set maximum index
             int max = NumberOfNodes(sensorB) - 1;
 
-            // 4) Measure performance in ticks
+            // Start stopwatch
             var sw = Stopwatch.StartNew();
+
+            // Execute recursive search
             int index = BinarySearchRecursive(sensorB, value, 0, max);
+
+            // Stop stopwatch
             sw.Stop();
 
-            // 5) Display ticks (required)
+            // Show execution ticks
             txtTicksBRec.Text = sw.ElapsedTicks + " ticks";
 
-            // 6) Refresh ListBox contents
+            // Refresh display data
             DisplayListboxData(sensorB, lbSensorB);
 
-            // 7) Highlight target ±2 neighbours (clamped inside helper)
+            // Highlight result + neighbours
             HighlightIndexWithNeighbours(lbSensorB, index);
 
+            // User feedback message
             txtStatus.Text = "Status: Sensor B Recursive Search completed";
         }
 
-
         // =========================================================
-        // Input Validation: Integer-only TextBox (blocks letters/spaces)
-        // Works for typing and for paste
+        // Q4.13 – Input Validation
+        // Allow int input only
+        // Block invalid typing and paste actions
+        // Allows digits only (0–9)
         // =========================================================
-        private void IntegerOnly_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        private void IntegerOnly_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            // Allow only digits 0-9
+            // If character is not a digit to block input
             e.Handled = !e.Text.All(char.IsDigit);
         }
 
+        // =========================================================
+        // IntegerOnly_Pasting()
+        // ---------------------------------------------------------
+        // Triggered when user pastes text into textbox
+        // Ensures pasted content contains digits only
+        // =========================================================
         private void IntegerOnly_Pasting(object sender, DataObjectPastingEventArgs e)
         {
+            // Check if pasted data contains text
             if (e.DataObject.GetDataPresent(typeof(string)))
             {
                 string text = (string)e.DataObject.GetData(typeof(string));
+
+                // Cancel paste if any character is not numeric
                 if (!text.All(char.IsDigit))
                     e.CancelCommand();
             }
             else
             {
+                // Cancel paste if data format is not text
                 e.CancelCommand();
             }
         }
