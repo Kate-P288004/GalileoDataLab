@@ -165,8 +165,12 @@ namespace GalileoDataLab
             // 3) Display both sensors in ListView
             ShowAllSensorData();
 
+            ResetUiAfterLoad();
+
             txtStatus.Text = "Status: Data loaded successfully";
         }
+
+
 
         // =========================================================
         // Q4.7 – SelectionSort() (Appendix Pseudocode)
@@ -948,5 +952,49 @@ namespace GalileoDataLab
             if (string.IsNullOrEmpty(text) || !text.All(char.IsDigit))
                 e.CancelCommand();
         }
+
+        // ---------------------------------------------------------
+        // Clears ListBox selection 
+        // ---------------------------------------------------------
+        private void ClearAll(ListBox lb)
+        {
+            // Single selection mode
+            if (lb.SelectionMode == SelectionMode.Single)
+            {
+                lb.SelectedItem = null;
+                lb.SelectedIndex = -1;
+            }
+            // Multiple selection mode
+            else
+            {
+                lb.SelectedItems.Clear();
+            }
+        }
+
+        // ---------------------------------------------------------
+        // Resets UI after loading new sensor data
+        // Clears old search, sort, and highlight results
+        // ---------------------------------------------------------
+        private void ResetUiAfterLoad()
+        {
+            // Clear previous ListBox highlights
+            ClearAll(lbSensorA);
+            ClearAll(lbSensorB);
+
+            // Clear search inputs and timing results
+            txtSearchA.Clear();
+            txtSearchB.Clear();
+            txtTicksAIter.Clear();
+            txtTicksARec.Clear();
+            txtTicksBIter.Clear();
+            txtTicksBRec.Clear();
+
+            // Clear sort timing results
+            txtMsSelA.Clear();
+            txtMsInsA.Clear();
+            txtMsSelB.Clear();
+            txtMsInsB.Clear();
+        }
     }
+
 }
