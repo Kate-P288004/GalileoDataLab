@@ -48,20 +48,38 @@
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
 
-        <!-- BRIGHT HIGHLIGHT -->
-        <Style TargetType="ListBoxItem">
-            <Style.Triggers>
-                <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#FFFF00"/>
-                    <Setter Property="Foreground" Value="#000000"/>
-                    <Setter Property="FontWeight" Value="Bold"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
         <!-- Headers -->
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="#2E2E44"/>
+        </Style>
+
+        <!-- Yellow selection that ALWAYS stays visible (no focus rules) -->
+        <Style x:Key="YellowSelectItemStyle" TargetType="ListBoxItem">
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Padding" Value="2,1"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="0"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <!-- Always yellow when selected -->
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#FFFF00"/>
+                                <Setter Property="Foreground" Value="#000000"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
     </Window.Resources>
@@ -123,9 +141,9 @@
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="Sensor A"
-                                DisplayMemberBinding="{Binding SensorA}" Width="110"/>
+                                            DisplayMemberBinding="{Binding SensorA}" Width="110"/>
                             <GridViewColumn Header="Sensor B"
-                                DisplayMemberBinding="{Binding SensorB}" Width="110"/>
+                                            DisplayMemberBinding="{Binding SensorB}" Width="110"/>
                         </GridView>
                     </ListView.View>
                 </ListView>
@@ -139,37 +157,29 @@
                         <ColumnDefinition Width="220"/>
                     </Grid.ColumnDefinitions>
 
-                    <ListBox Grid.Column="0" x:Name="lbSensorA"/>
+                    <ListBox Grid.Column="0"
+                             x:Name="lbSensorA"
+                             ItemContainerStyle="{StaticResource YellowSelectItemStyle}"/>
 
                     <StackPanel Grid.Column="1" Margin="8,0,0,0">
-
                         <TextBlock Text="Binary Search Iterative"/>
-                        <Button x:Name="btnSearchAIter"
-                                Content="Search"
-                                Click="btnSearchAIter_Click"/>
+                        <Button x:Name="btnSearchAIter" Content="Search" Click="btnSearchAIter_Click"/>
                         <TextBox x:Name="txtTicksAIter" IsReadOnly="True"/>
 
                         <TextBlock Text="Binary Search Recursive" Margin="0,6,0,0"/>
-                        <Button x:Name="btnSearchARec"
-                                Content="Search"
-                                Click="btnSearchARec_Click"/>
+                        <Button x:Name="btnSearchARec" Content="Search" Click="btnSearchARec_Click"/>
                         <TextBox x:Name="txtTicksARec" IsReadOnly="True"/>
 
                         <TextBlock Text="Search Target" Margin="0,6,0,0"/>
                         <TextBox x:Name="txtSearchA"/>
 
                         <TextBlock Text="Selection Sort" Margin="0,6,0,0"/>
-                        <Button x:Name="btnSelSortA"
-                                Content="Sort"
-                                Click="btnSelSortA_Click"/>
+                        <Button x:Name="btnSelSortA" Content="Sort" Click="btnSelSortA_Click"/>
                         <TextBox x:Name="txtMsSelA" IsReadOnly="True"/>
 
                         <TextBlock Text="Insertion Sort" Margin="0,6,0,0"/>
-                        <Button x:Name="btnInsSortA"
-                                Content="Sort"
-                                Click="btnInsSortA_Click"/>
+                        <Button x:Name="btnInsSortA" Content="Sort" Click="btnInsSortA_Click"/>
                         <TextBox x:Name="txtMsInsA" IsReadOnly="True"/>
-
                     </StackPanel>
                 </Grid>
             </GroupBox>
@@ -182,37 +192,29 @@
                         <ColumnDefinition Width="220"/>
                     </Grid.ColumnDefinitions>
 
-                    <ListBox Grid.Column="0" x:Name="lbSensorB"/>
+                    <ListBox Grid.Column="0"
+                             x:Name="lbSensorB"
+                             ItemContainerStyle="{StaticResource YellowSelectItemStyle}"/>
 
                     <StackPanel Grid.Column="1" Margin="8,0,0,0">
-
                         <TextBlock Text="Binary Search Iterative"/>
-                        <Button x:Name="btnSearchBIter"
-                                Content="Search"
-                                Click="btnSearchBIter_Click"/>
+                        <Button x:Name="btnSearchBIter" Content="Search" Click="btnSearchBIter_Click"/>
                         <TextBox x:Name="txtTicksBIter" IsReadOnly="True"/>
 
                         <TextBlock Text="Binary Search Recursive" Margin="0,6,0,0"/>
-                        <Button x:Name="btnSearchBRec"
-                                Content="Search"
-                                Click="btnSearchBRec_Click"/>
+                        <Button x:Name="btnSearchBRec" Content="Search" Click="btnSearchBRec_Click"/>
                         <TextBox x:Name="txtTicksBRec" IsReadOnly="True"/>
 
                         <TextBlock Text="Search Target" Margin="0,6,0,0"/>
                         <TextBox x:Name="txtSearchB"/>
 
                         <TextBlock Text="Selection Sort" Margin="0,6,0,0"/>
-                        <Button x:Name="btnSelSortB"
-                                Content="Sort"
-                                Click="btnSelSortB_Click"/>
+                        <Button x:Name="btnSelSortB" Content="Sort" Click="btnSelSortB_Click"/>
                         <TextBox x:Name="txtMsSelB" IsReadOnly="True"/>
 
                         <TextBlock Text="Insertion Sort" Margin="0,6,0,0"/>
-                        <Button x:Name="btnInsSortB"
-                                Content="Sort"
-                                Click="btnInsSortB_Click"/>
+                        <Button x:Name="btnInsSortB" Content="Sort" Click="btnInsSortB_Click"/>
                         <TextBox x:Name="txtMsInsB" IsReadOnly="True"/>
-
                     </StackPanel>
                 </Grid>
             </GroupBox>

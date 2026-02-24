@@ -35,17 +35,13 @@ namespace GalileoDataLab
         public MainWindow()
         {
             InitializeComponent();
-
-            // Enable multiple selection for neighbour highlighting 
-            lbSensorA.SelectionMode = SelectionMode.Extended;
-            lbSensorB.SelectionMode = SelectionMode.Extended;
         }
 
         // =========================================================
         // Q4.2 – LoadData()
         // - Name must be LoadData
         // - No parameters, return void
-        // - Create Galileo instance INSIDE method
+        // - Create Galileo instance inside method
         // - Hardcoded size 400
         // - Validate Sigma (10–20) and Mu (35–75)
         // =========================================================
@@ -178,35 +174,37 @@ namespace GalileoDataLab
         // =========================================================
         private bool SelectionSort(LinkedList<double> list)
         {
-            // Safety checks
             if (list == null) return false;
 
             int max = NumberOfNodes(list);
             if (max < 2) return false;
 
-            // for ( i = 0 to max - 1 )
             for (int i = 0; i < max - 1; i++)
             {
-                // min => i
                 int min = i;
 
-                // for ( j = i + 1 to max )
                 for (int j = i + 1; j < max; j++)
                 {
-                    // if (list element(j) < list element(min)) min => j
                     if (list.ElementAt(j) < list.ElementAt(min))
                         min = j;
                 }
-                LinkedListNode<double>? currentMin = list.Find(list.ElementAt(min));
-                LinkedListNode<double>? currentI = list.Find(list.ElementAt(i));
 
-                if (currentMin == null || currentI == null)
-                    return false;
+                // Get node at index i (manual walk, no helpers)
+                LinkedListNode<double>? nodeI = list.First;
+                for (int k = 0; k < i && nodeI != null; k++)
+                    nodeI = nodeI.Next;
 
-                // Swap values (Appendix swap)
-                double temp = currentMin.Value;
-                currentMin.Value = currentI.Value;
-                currentI.Value = temp;
+                // Get node at index min (manual walk, no helpers)
+                LinkedListNode<double>? nodeMin = list.First;
+                for (int k = 0; k < min && nodeMin != null; k++)
+                    nodeMin = nodeMin.Next;
+
+                if (nodeI == null || nodeMin == null) return false;
+
+                // Swap values
+                double temp = nodeMin.Value;
+                nodeMin.Value = nodeI.Value;
+                nodeI.Value = temp;
             }
 
             return true;
@@ -218,32 +216,31 @@ namespace GalileoDataLab
         // =========================================================
         private bool InsertionSort(LinkedList<double> list)
         {
-            // Safety checks
             if (list == null) return false;
 
             int max = NumberOfNodes(list);
             if (max < 2) return false;
 
-            // for ( i = 0 to max - 1 )
             for (int i = 0; i < max - 1; i++)
             {
-                // for ( j = i + 1 to j > 0, j-- )
                 for (int j = i + 1; j > 0; j--)
                 {
-                    // if (list element(j - 1) > list element(j))
                     if (list.ElementAt(j - 1) > list.ElementAt(j))
                     {
-                        LinkedListNode<double>? current = list.Find(list.ElementAt(j));
-                        LinkedListNode<double>? previous = list.Find(list.ElementAt(j - 1));
+                        // Get node at index (j-1)
+                        LinkedListNode<double>? prevNode = list.First;
+                        for (int k = 0; k < j - 1 && prevNode != null; k++)
+                            prevNode = prevNode.Next;
 
-                        // Null-safety
-                        if (current == null || previous == null)
-                            return false;
+                        if (prevNode == null || prevNode.Next == null) return false;
 
-                        // Swap previous value with current value
-                        double temp = previous.Value;
-                        previous.Value = current.Value;
-                        current.Value = temp;
+                        // Node at index j is the next node
+                        LinkedListNode<double> curNode = prevNode.Next;
+
+                        // Swap adjacent values
+                        double temp = prevNode.Value;
+                        prevNode.Value = curNode.Value;
+                        curNode.Value = temp;
                     }
                 }
             }
@@ -491,22 +488,24 @@ namespace GalileoDataLab
             else
                 index = result;
 
-            // Highlight target 2
+            // Highlight found value only
             if (lbSensorA.Items.Count > 0)
             {
+                // Keep index inside valid bounds
                 if (index < 0) index = 0;
-                if (index >= lbSensorA.Items.Count) index = lbSensorA.Items.Count - 1;
+                if (index >= lbSensorA.Items.Count)
+                    index = lbSensorA.Items.Count - 1;
 
-                lbSensorA.SelectedItems.Clear();
+                // Clear previous selection
+                // lbSensorA.SelectedItems.Clear();
 
-                int start = Math.Max(0, index - 2);
-                int end = Math.Min(lbSensorA.Items.Count - 1, index + 2);
+                // Highlight only target item
+                lbSensorA.SelectedItem = lbSensorA.Items[index];
 
-                for (int i = start; i <= end; i++)
-                    lbSensorA.SelectedItems.Add(lbSensorA.Items[i]);
-
+                // Scroll selected item into view
                 lbSensorA.ScrollIntoView(lbSensorA.Items[index]);
-                lbSensorA.Focus();
+
+
             }
 
             txtStatus.Text = "Status: Sensor A Iterative Search completed";
@@ -599,8 +598,8 @@ namespace GalileoDataLab
             int max = NumberOfNodes(sensorA);
 
             // ---------------------------------------------------------
-            // Step 5: Start stopwatch BEFORE recursive search
-            // Measure execution time in ticks (assessment rule)
+            // Step 5: Start stopwatch before recursive search
+            // Measure execution time in ticks 
             // ---------------------------------------------------------
             var sw = Stopwatch.StartNew();
 
@@ -619,8 +618,7 @@ namespace GalileoDataLab
             DisplayListboxData(sensorA, lbSensorA);
 
             // ---------------------------------------------------------
-            // Step 7: Highlight found value and neighbours (±2)
-            // Required assessment visual feedback
+            // Step 7: Highlight found value only
             // ---------------------------------------------------------
             if (lbSensorA.Items.Count > 0)
             {
@@ -629,22 +627,16 @@ namespace GalileoDataLab
                 if (index >= lbSensorA.Items.Count)
                     index = lbSensorA.Items.Count - 1;
 
-                // Clear old selection (avoid stacking highlights)
-                lbSensorA.SelectedItems.Clear();
+                // Clear previous selection
+                // lbSensorA.SelectedItems.Clear();
 
-                // Calculate neighbour range (target 2)
-                int start = Math.Max(0, index - 2);
-                int end = Math.Min(lbSensorA.Items.Count - 1, index + 2);
+                // Highlight only the target item
+                lbSensorA.SelectedItem = lbSensorA.Items[index];
 
-                // Highlight the target and surrounding values
-                for (int i = start; i <= end; i++)
-                    lbSensorA.SelectedItems.Add(lbSensorA.Items[i]);
-
-                // Scroll ListBox so highlighted item is visible
+                // Scroll ListBox so selected item is visible
                 lbSensorA.ScrollIntoView(lbSensorA.Items[index]);
 
-                // Focus for clear UI feedback
-                lbSensorA.Focus();
+
             }
 
             // ---------------------------------------------------------
@@ -772,7 +764,7 @@ namespace GalileoDataLab
                 index = result;
 
             // ---------------------------------------------------------
-            // Step 8: Highlight found value and neighbours (2)
+            // Step 8: Highlight found value only
             // ---------------------------------------------------------
             if (lbSensorB.Items.Count > 0)
             {
@@ -782,21 +774,14 @@ namespace GalileoDataLab
                     index = lbSensorB.Items.Count - 1;
 
                 // Clear old selection
-                lbSensorB.SelectedItems.Clear();
+                // lbSensorB.SelectedItems.Clear();
 
-                // Calculate neighbour range
-                int start = Math.Max(0, index - 2);
-                int end = Math.Min(lbSensorB.Items.Count - 1, index + 2);
+                // Highlight only the target item
+                lbSensorB.SelectedItem = lbSensorB.Items[index];
 
-                // Highlight target and surrounding values
-                for (int i = start; i <= end; i++)
-                    lbSensorB.SelectedItems.Add(lbSensorB.Items[i]);
-
-                // Scroll so highlighted item is visible
+                // Scroll so selected item is visible
                 lbSensorB.ScrollIntoView(lbSensorB.Items[index]);
 
-                // Give focus for visual clarity
-                lbSensorB.Focus();
             }
 
             // ---------------------------------------------------------
@@ -912,6 +897,10 @@ namespace GalileoDataLab
             // ---------------------------------------------------------
             // Step 7: Highlight search result and neighbours (2)
             // ---------------------------------------------------------
+            // Refresh ListBox display
+            DisplayListboxData(sensorB, lbSensorB);
+
+            // Highlight the target item 
             if (lbSensorB.Items.Count > 0)
             {
                 // Clamp index within valid ListBox range
@@ -919,21 +908,15 @@ namespace GalileoDataLab
                 if (index >= lbSensorB.Items.Count)
                     index = lbSensorB.Items.Count - 1;
 
-                // Clear any previous selection
-                lbSensorB.SelectedItems.Clear();
+                // Clear previous selection
+                //lbSensorB.SelectedItems.Clear();
 
-                // Calculate neighbour range 
-                int start = Math.Max(0, index - 2);
-                int end = Math.Min(lbSensorB.Items.Count - 1, index + 2);
+                // Select only the target item
+                lbSensorB.SelectedItem = lbSensorB.Items[index];
 
-                // Highlight target and surrounding values
-                for (int i = start; i <= end; i++)
-                    lbSensorB.SelectedItems.Add(lbSensorB.Items[i]);
-
-                // Scroll ListBox so result is visible
+                // Scroll so the selected item is visible
                 lbSensorB.ScrollIntoView(lbSensorB.Items[index]);
 
-                lbSensorB.Focus();
             }
 
             // ---------------------------------------------------------
