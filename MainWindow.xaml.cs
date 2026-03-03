@@ -264,7 +264,6 @@ namespace GalileoDataLab
 
         // =========================================================
         // Q4.10 – BinarySearchRecursive()
-        // Lecturer requirement: compare by integer group
         // =========================================================
         public int BinarySearchRecursive(LinkedList<double> list, int searchValue, int minimum, int maximum)
         {
@@ -409,9 +408,9 @@ namespace GalileoDataLab
 
             // show NOT FOUND message with closest group
             if (pickLeft && pickRight && left != right && leftDiff == rightDiff)
-                txtStatus.Text = $"Status: NOT FOUND. Closest groups: {leftGroup} and {rightGroup}.";
+                txtStatus.Text = $"Status: NOT FOUND. Closest target: {leftGroup} and {rightGroup}.";
             else
-                txtStatus.Text = $"Status: NOT FOUND. Closest group: {(pickLeft ? leftGroup : rightGroup)}.";
+                txtStatus.Text = $"Status: NOT FOUND. Closest target: {(pickLeft ? leftGroup : rightGroup)}.";
         }
 
         // =========================================================
