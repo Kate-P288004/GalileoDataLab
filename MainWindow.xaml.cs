@@ -287,10 +287,10 @@ namespace GalileoDataLab
         }
 
         // =========================================================
-        // IsSortedByGroup()
-        // Checks list is sorted by integer groups before binary search
+        // Sorted()
+        // Checks list is sorted by integer  before binary search
         // =========================================================
-        private bool IsSortedByGroup(LinkedList<double> list)
+        private bool Sorted(LinkedList<double> list)
         {
             var firstNode = list.First;
             if (firstNode == null) return false;
@@ -311,11 +311,11 @@ namespace GalileoDataLab
         }
 
         // =========================================================
-        // HighlightGroup()
+        // Highlightp()
         // - Highlights ALL target group values (example: 32.xxxx)
-        // - If not found, highlights the closest group value(s)
+        // - If not found, highlights the closest value(s)
         // =========================================================
-        private void HighlightGroup(LinkedList<double> list, ListBox lb, int target, int insertionPosCandidate)
+        private void Highlight(LinkedList<double> list, ListBox lb, int target, int insertion)
         {
             // stop if ListBox has no items to highlight
             if (lb.Items.Count == 0) return;
@@ -368,12 +368,12 @@ namespace GalileoDataLab
             int count = lb.Items.Count;
 
             // keep insertion position inside valid bounds
-            if (insertionPosCandidate < 0) insertionPosCandidate = 0;
-            if (insertionPosCandidate > count) insertionPosCandidate = count;
+            if (insertion < 0) insertion = 0;
+            if (insertion > count) insertion = count;
 
             // choose the positions around the insertion point
-            int right = insertionPosCandidate;
-            int left = insertionPosCandidate - 1;
+            int right = insertion;
+            int left = insertion - 1;
 
             // clamp right index
             if (right < 0) right = 0;
@@ -492,7 +492,7 @@ namespace GalileoDataLab
             }
 
             // Step 3: stop if data is not sorted (binary search will be wrong)
-            if (!IsSortedByGroup(sensorA))
+            if (!Sorted(sensorA))
             {
                 txtStatus.Text = "Status: Please sort Sensor A data first.";
                 return;
@@ -516,18 +516,18 @@ namespace GalileoDataLab
             // Step 9: refresh ListBox values
             DisplayListboxData(sensorA, lbSensorA);
 
-            // Step 10: convert search return to a safe index to use for "closest"
+            // Step 10: convert search return 
             // iterative returns:
             // - ++middle (1-based) when found
             // - insertion position when not found
-            int insertionPosCandidate;
+            int insertion;
             if (result >= 1 && result <= lbSensorA.Items.Count)
-                insertionPosCandidate = result - 1; // convert to 0-based index
+                insertion = result - 1; // convert to 0-based index
             else
-                insertionPosCandidate = result;
+                insertion = result;
 
             // Step 11: highlight all matching group values or closest group
-            HighlightGroup(sensorA, lbSensorA, value, insertionPosCandidate);
+            Highlight(sensorA, lbSensorA, value, insertion);
         }
 
         private void btnSearchARec_Click(object sender, RoutedEventArgs e)
@@ -547,7 +547,7 @@ namespace GalileoDataLab
             }
 
             // Step 3: stop if data is not sorted
-            if (!IsSortedByGroup(sensorA))
+            if (!Sorted(sensorA))
             {
                 txtStatus.Text = "Status: Please sort Sensor A data first.";
                 return;
@@ -572,7 +572,7 @@ namespace GalileoDataLab
             DisplayListboxData(sensorA, lbSensorA);
 
             // Step 10: highlight all matching group values or closest group
-            HighlightGroup(sensorA, lbSensorA, value, indexOrInsert);
+            Highlight(sensorA, lbSensorA, value, indexOrInsert);
         }
 
         // =========================================================
@@ -595,7 +595,7 @@ namespace GalileoDataLab
             }
 
             // binary search requires sorted data
-            if (!IsSortedByGroup(sensorB))
+            if (!Sorted(sensorB))
             {
                 txtStatus.Text = "Status: Please sort Sensor B data first.";
                 return;
@@ -620,14 +620,14 @@ namespace GalileoDataLab
             DisplayListboxData(sensorB, lbSensorB);
 
             // convert return value to insertion candidate
-            int insertionPosCandidate;
+            int insertion;
             if (result >= 1 && result <= lbSensorB.Items.Count)
-                insertionPosCandidate = result - 1;
+                insertion = result - 1;
             else
-                insertionPosCandidate = result;
+                insertion = result;
 
             // highlight results
-            HighlightGroup(sensorB, lbSensorB, value, insertionPosCandidate);
+            Highlight(sensorB, lbSensorB, value, insertion);
         }
 
         private void btnSearchBRec_Click(object sender, RoutedEventArgs e)
@@ -647,7 +647,7 @@ namespace GalileoDataLab
             }
 
             // binary search works only on sorted data
-            if (!IsSortedByGroup(sensorB))
+            if (!Sorted(sensorB))
             {
                 txtStatus.Text = "Status: Please sort Sensor B data first.";
                 return;
@@ -672,7 +672,7 @@ namespace GalileoDataLab
             DisplayListboxData(sensorB, lbSensorB);
 
             // highlight results
-            HighlightGroup(sensorB, lbSensorB, value, indexOrInsert);
+            Highlight(sensorB, lbSensorB, value, indexOrInsert);
         }
 
         // =========================================================
