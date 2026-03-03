@@ -5,8 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace GalileoDataLab
 {
@@ -18,14 +16,16 @@ namespace GalileoDataLab
     /// Purpose:
     /// - Load 400 readings from Galileo6 DLL into LinkedList<double>
     /// - Sort using Selection Sort and Insertion Sort
-    /// - Search using Binary Search (Iterative and Recursive)
+    /// - Search using Binary Search:
+    ///     A) Group mode (integer)    : 32 -> highlights ALL 32.xxxx
+    ///     B) Exact mode (decimal)    : 32.5000 -> highlights only 32.5000
     /// - Measure performance:
-    ///     Sort: milliseconds
+    ///     Sort  : milliseconds
     ///     Search: ticks
     ///
-    /// Lecturer highlight requirement:
-    /// - If target=32 do highlight ALL values 32.xxxx.
-    /// - If no 32.xxxx do show NOT FOUND and highlight closest group value(s).
+    /// Lecturer highlight requirement (GROUP MODE):
+    /// - If target=32 highlight ALL values 32.xxxx.
+    /// - If no 32.xxxx show NOT FOUND and highlight closest group value(s).
     /// =========================================================
     /// </summary>
     public partial class MainWindow : Window
@@ -39,8 +39,8 @@ namespace GalileoDataLab
         public MainWindow()
         {
             InitializeComponent();
-
         }
+
         // =========================================================
         // Q4.2 – LoadData()
         // =========================================================
@@ -91,7 +91,7 @@ namespace GalileoDataLab
         {
             int count = 0;
 
-            // walk node-by-node and count manually
+            // Walk node-by-node and count manually
             for (var node = list.First; node != null; node = node.Next)
                 count++;
 
@@ -103,10 +103,10 @@ namespace GalileoDataLab
         // =========================================================
         private void DisplayListboxData(LinkedList<double> list, ListBox target)
         {
-            // clear old display
+            // Step 1: clear old display
             target.Items.Clear();
 
-            // add formatted values
+            // Step 2: add formatted values (4 decimals)
             foreach (double v in list)
                 target.Items.Add(v.ToString("F4"));
         }
@@ -121,7 +121,7 @@ namespace GalileoDataLab
             var a = sensorA.First;
             var b = sensorB.First;
 
-            // show values side-by-side
+            // Show values side-by-side
             while (a != null && b != null)
             {
                 lvSensors.Items.Add(new
@@ -161,31 +161,31 @@ namespace GalileoDataLab
             int max = NumberOfNodes(list);
             if (max < 2) return false;
 
-            // move boundary of unsorted part
+            // Move boundary of unsorted part
             for (int i = 0; i < max - 1; i++)
             {
                 int min = i;
 
-                // find smallest in remaining list
+                // Find smallest in remaining list
                 for (int j = i + 1; j < max; j++)
                 {
                     if (list.ElementAt(j) < list.ElementAt(min))
                         min = j;
                 }
 
-                // move to node at i
+                // Move to node at i
                 var nodeI = list.First;
                 for (int k = 0; k < i && nodeI != null; k++)
                     nodeI = nodeI.Next;
 
-                // move to node at min
+                // Move to node at min
                 var nodeMin = list.First;
                 for (int k = 0; k < min && nodeMin != null; k++)
                     nodeMin = nodeMin.Next;
 
                 if (nodeI == null || nodeMin == null) return false;
 
-                // swap values
+                // Swap values
                 double temp = nodeMin.Value;
                 nodeMin.Value = nodeI.Value;
                 nodeI.Value = temp;
@@ -204,12 +204,12 @@ namespace GalileoDataLab
             int max = NumberOfNodes(list);
             if (max < 2) return false;
 
-            // take each element and insert into sorted portion
+            // Take each element and insert into sorted portion
             for (int i = 0; i < max - 1; i++)
             {
                 for (int j = i + 1; j > 0; j--)
                 {
-                    // if out of order do swap neighbours
+                    // If out of order do swap neighbours
                     if (list.ElementAt(j - 1) > list.ElementAt(j))
                     {
                         var prev = list.First;
@@ -231,31 +231,60 @@ namespace GalileoDataLab
         }
 
         // =========================================================
-        // Sorted() – Checks sort order using integer group compare
+        // Sorted()
         // Why needed:
         // - Binary Search only works on sorted data.
-        // - Search comparesint only, so list must be sorted
+        // - We support TWO search modes:
+        //   A) Group mode  : compare (int)value
+        //   B) Exact mode  : compare full double
+        //
+        // exactDecimal:
+        // - true  -> validate sorted by full decimals
+        // - false -> validate sorted by integer groups
         // =========================================================
-        private bool Sorted(LinkedList<double> list)
+        private bool Sorted(LinkedList<double> list, bool exactDecimal)
         {
             var first = list.First;
             if (first == null) return false;
 
-            int prev = (int)first.Value;
-
-            for (var n = first.Next; n != null; n = n.Next)
+            if (exactDecimal)
             {
-                int cur = (int)n.Value;
-                if (cur < prev) return false;
+                double prev = first.Value;
 
-                prev = cur;
+                for (var n = first.Next; n != null; n = n.Next)
+                {
+                    double cur = n.Value;
+                    if (cur < prev) return false;
+
+                    prev = cur;
+                }
+
+                return true;
             }
+            else
+            {
+                int prevGroup = (int)first.Value;
 
-            return true;
+                for (var n = first.Next; n != null; n = n.Next)
+                {
+                    int curGroup = (int)n.Value;
+                    if (curGroup < prevGroup) return false;
+
+                    prevGroup = curGroup;
+                }
+
+                return true;
+            }
         }
 
         // =========================================================
-        // Q4.9 – BinarySearchIterative()
+        // Q4.9 – BinarySearchIterative() (GROUP MODE)
+        //
+        // Notes:
+        // - Uses integer group compare: (int)value
+        // - Returns:
+        //   - if found: returns mid+1 (your appendix rule)
+        //   - if not found: returns insertion position (min)
         // =========================================================
         private int BinarySearchIterative(LinkedList<double> list, int target, int min, int max)
         {
@@ -263,11 +292,11 @@ namespace GalileoDataLab
             {
                 int mid = (min + max) / 2;
 
-
+                // Group compare only
                 int group = (int)list.ElementAt(mid);
 
                 if (target == group)
-                    return ++mid; // appendix rule
+                    return ++mid; // appendix rule (1-based style)
 
                 if (target < group)
                     max = mid - 1;
@@ -275,12 +304,15 @@ namespace GalileoDataLab
                     min = mid + 1;
             }
 
-
-            return min;
+            return min; // insertion position
         }
 
         // =========================================================
-        // Q4.10 – BinarySearchRecursive()
+        // Q4.10 – BinarySearchRecursive() (GROUP MODE)
+        // - Uses integer group compare: (int)value
+        // - Returns:
+        //   - if found: returns mid (0-based)
+        //   - if not found: returns insertion position (min)
         // =========================================================
         public int BinarySearchRecursive(LinkedList<double> list, int target, int min, int max)
         {
@@ -294,22 +326,89 @@ namespace GalileoDataLab
 
                 if (target < group)
                     return BinarySearchRecursive(list, target, min, mid - 1);
-                else
-                    return BinarySearchRecursive(list, target, mid + 1, max);
+
+                return BinarySearchRecursive(list, target, mid + 1, max);
             }
 
-            return min;
+            return min; // insertion position
         }
+
         // =========================================================
-        // Highlight()
-        // What this does (lecturer requirement):
-        // 1) If the target group exists (example target=32),
-        //    highlight every value where the integer part is 32.
-        // 2) If the target group does NOT exist,
-        //    highlight the closestn value(s) to show the nearest result.
-        //    If both sides are equally close, highlight both.
+        // BinarySearchIterativeExact() (EXACT DECIMAL MODE)
+        // - Searches by FULL decimal value (double)
+        // - Returns:
+        //   - index if found
+        //   - insertion position if NOT found
+        //
+        // EPS is used because doubles can have tiny precision differences.
         // =========================================================
-        private void Highlight(LinkedList<double> list, ListBox lb, int target, int insertionPos)
+        private int BinarySearchIterativeExact(LinkedList<double> list, double target, int min, int max)
+        {
+            const double EPS = 0.0000001;
+
+            while (min <= max - 1)
+            {
+                int mid = (min + max) / 2;
+                double val = list.ElementAt(mid);
+
+                if (Math.Abs(val - target) < EPS)
+                    return mid;
+
+                if (target < val)
+                    max = mid - 1;
+                else
+                    min = mid + 1;
+            }
+
+            return min; // insertion position
+        }
+
+        // =========================================================
+        // BinarySearchRecursiveExact() (EXACT DECIMAL MODE)
+        // - Searches by FULL decimal value (double)
+        // - Returns:
+        //   - index if found
+        //   - insertion position if NOT found
+        // =========================================================
+        private int BinarySearchRecursiveExact(LinkedList<double> list, double target, int min, int max)
+        {
+            const double EPS = 0.0000001;
+
+            if (min <= max - 1)
+            {
+                int mid = (min + max) / 2;
+                double val = list.ElementAt(mid);
+
+                if (Math.Abs(val - target) < EPS)
+                    return mid;
+
+                if (target < val)
+                    return BinarySearchRecursiveExact(list, target, min, mid - 1);
+
+                return BinarySearchRecursiveExact(list, target, mid + 1, max);
+            }
+
+            return min; // insertion position
+        }
+
+        // =========================================================
+        // Highlight() (DUAL MODE)
+        //
+        // GROUP MODE (lecturer requirement):
+        // 1) If target group exists (target=32), highlight ALL values 32.xxxx
+        // 2) If group does NOT exist, highlight closest group(s)
+        //    If tie, highlight both.
+        //
+        // EXACT MODE (added feature):
+        // 1) If input has decimals (32.5000), highlight only exact value
+        // 2) If exact value does NOT exist, highlight closest decimal(s)
+        //
+        // Parameters:
+        // - input        : raw user input number (double)
+        // - exactDecimal : true = exact decimal mode, false = group mode
+        // - insertionPos : insertion position returned by binary search
+        // =========================================================
+        private void Highlight(LinkedList<double> list, ListBox lb, double input, bool exactDecimal, int insertionPos)
         {
             // Safety: if ListBox is empty, nothing to highlight
             if (lb.Items.Count == 0) return;
@@ -317,48 +416,58 @@ namespace GalileoDataLab
             // Clear any old highlighted items first
             lb.SelectedItems.Clear();
 
+            const double EPS = 0.0000001;
+
             // =========================================================
             // PART A: FOUND
-            // Walk the LinkedList and select all items where:
-            // (int)value == target
-            // Example: 32.0001, 32.9999, 32.5432 all become group 32
             // =========================================================
-            int idx = 0;              // keeps the same index as the ListBox item
-            int firstMatch = -1;      // remember first match so we can scroll to it
+            int idx = 0;
+            int firstMatch = -1;
 
-            // Loop through the LinkedList nodes in order
             for (var n = list.First; n != null; n = n.Next, idx++)
             {
-                // Group = integer part only (32.1234 -> 32)
-                int group = (int)n.Value;
-
-                // If this node belongs to the searched group
-                if (group == target)
+                if (exactDecimal)
                 {
-                    // Save the first matching index (for scrolling)
-                    if (firstMatch == -1)
-                        firstMatch = idx;
+                    // Exact decimal match (tolerance for doubles)
+                    if (Math.Abs(n.Value - input) < EPS)
+                    {
+                        if (firstMatch == -1)
+                            firstMatch = idx;
 
-                    // Highlight this row in the ListBox
-                    lb.SelectedItems.Add(lb.Items[idx]);
+                        lb.SelectedItems.Add(lb.Items[idx]);
+                    }
+                }
+                else
+                {
+                    // Group match: integer part only (32.999 -> 32)
+                    int group = (int)n.Value;
+                    int targetGroup = (int)input;
+
+                    if (group == targetGroup)
+                    {
+                        if (firstMatch == -1)
+                            firstMatch = idx;
+
+                        lb.SelectedItems.Add(lb.Items[idx]);
+                    }
                 }
             }
 
+            // If at least one match was found, scroll + status and stop
             if (firstMatch != -1)
             {
-                // Scroll the ListBox to the first matching highlighted value
                 lb.ScrollIntoView(lb.Items[firstMatch]);
 
-                // Show status message
-                txtStatus.Text = $"Status: Found {target}. Highlighted all {target}.";
+                if (exactDecimal)
+                    txtStatus.Text = $"Status: Found {input:F4}. Highlighted exact value.";
+                else
+                    txtStatus.Text = $"Status: Found {(int)input}. Highlighted all {(int)input}.";
+
                 return;
             }
 
             // =========================================================
-            // PART B: NOT FOUND
-            // The group does not exist in the data.
-            // Highlight the closest value(s) using the insertion position
-            // that binary search returned.
+            // PART B: NOT FOUND -> highlight closest value(s)
             // =========================================================
             int count = lb.Items.Count;
 
@@ -366,438 +475,377 @@ namespace GalileoDataLab
             if (insertionPos < 0) insertionPos = 0;
             if (insertionPos > count) insertionPos = count;
 
-            // Neighbours around the insertion position:
-            // - "right" is where the target would be inserted
-            // - "left" is the item just before that position
+            // Neighbours around the insertion position
             int right = insertionPos;
             int left = insertionPos - 1;
 
-            // Clamp right index into valid range 
+            // Clamp right
             if (right < 0) right = 0;
             if (right > count - 1) right = count - 1;
 
-            // Clamp left index into valid range 
+            // Clamp left
             if (left < 0) left = 0;
             if (left > count - 1) left = count - 1;
 
-            // ElementAt is used here to read the value at that index
+            // ---------------------------------------------------------
+            // NOT FOUND: Exact decimal mode
+            // ---------------------------------------------------------
+            if (exactDecimal)
+            {
+                double leftVal = list.ElementAt(left);
+                double rightVal = list.ElementAt(right);
+
+                double leftDiff = Math.Abs(input - leftVal);
+                double rightDiff = Math.Abs(input - rightVal);
+
+                // Tie rule: if equal distance, highlight both
+                bool pickLeft = leftDiff <= rightDiff;
+                bool pickRight = rightDiff <= leftDiff;
+
+                if (pickLeft)
+                    lb.SelectedItems.Add(lb.Items[left]);
+
+                if (pickRight && right != left)
+                    lb.SelectedItems.Add(lb.Items[right]);
+
+                lb.ScrollIntoView(lb.Items[pickLeft ? left : right]);
+
+                if (pickLeft && pickRight && left != right && Math.Abs(leftDiff - rightDiff) < EPS)
+                    txtStatus.Text = $"Status: NOT FOUND {input:F4}. Closest: {leftVal:F4} and {rightVal:F4}.";
+                else
+                    txtStatus.Text = $"Status: NOT FOUND {input:F4}. Closest: {(pickLeft ? leftVal : rightVal):F4}.";
+
+                return;
+            }
+
+            // ---------------------------------------------------------
+            // NOT FOUND: Group mode (lecturer requirement)
+            // ---------------------------------------------------------
+            int targetGroup2 = (int)input;
+
             int leftGroup = (int)list.ElementAt(left);
             int rightGroup = (int)list.ElementAt(right);
 
-            // Work out how far each side is from the target
-            int leftDiff = Math.Abs(target - leftGroup);
-            int rightDiff = Math.Abs(target - rightGroup);
+            int leftDiff2 = Math.Abs(targetGroup2 - leftGroup);
+            int rightDiff2 = Math.Abs(targetGroup2 - rightGroup);
 
-            // Decide which side is closer:
-            // - If left is smaller or equal distance, pick left
-            // - If right is smaller or equal distance, pick right
-            // If the distance is equal, BOTH become true (so we highlight both).
-            bool pickLeft = leftDiff <= rightDiff;
-            bool pickRight = rightDiff <= leftDiff;
+            bool pickLeft2 = leftDiff2 <= rightDiff2;
+            bool pickRight2 = rightDiff2 <= leftDiff2;
 
-            // Highlight left side if it is the closest 
-            if (pickLeft)
+            if (pickLeft2)
                 lb.SelectedItems.Add(lb.Items[left]);
 
-            // Highlight right side if it is the closest 
-            // Avoid double-selecting same index
-            if (pickRight && right != left)
+            if (pickRight2 && right != left)
                 lb.SelectedItems.Add(lb.Items[right]);
 
-            // Scroll to whichever side we prefer to show first
-            lb.ScrollIntoView(lb.Items[pickLeft ? left : right]);
+            lb.ScrollIntoView(lb.Items[pickLeft2 ? left : right]);
 
-            // Status message:
-            // If tie and two different indices, show both closest groups
-            if (pickLeft && pickRight && left != right && leftDiff == rightDiff)
-                txtStatus.Text = $"Status: NOT FOUND. Closest: {leftGroup} and {rightGroup}.";
+            if (pickLeft2 && pickRight2 && left != right && leftDiff2 == rightDiff2)
+                txtStatus.Text = $"Status: NOT FOUND {targetGroup2}. Closest: {leftGroup} and {rightGroup}.";
             else
-                txtStatus.Text = $"Status: NOT FOUND. Closest: {(pickLeft ? leftGroup : rightGroup)}.";
+                txtStatus.Text = $"Status: NOT FOUND {targetGroup2}. Closest: {(pickLeft2 ? leftGroup : rightGroup)}.";
         }
 
         // =========================================================
         // Q4.11 – SORT BUTTONS (Selection + Insertion)
-        // Requirement:
-        // - Ensure data exists (at least 2 nodes)
-        // - Start stopwatch BEFORE sorting
-        // - Perform selected sorting algorithm
-        // - Stop stopwatch AFTER sorting
-        // - Display elapsed time in milliseconds
-        // - Refresh ListBox display
-        // - Update overall sensor data view
-        // - Update status message
         // =========================================================
 
-
-        // ---------------------------------------------------------
-        // SENSOR A – Selection Sort
-        // ---------------------------------------------------------
         private void btnSelSortA_Click(object sender, RoutedEventArgs e)
         {
-            // Step 1: Validate data exists
-            // Sorting requires at least 2 values
             if (NumberOfNodes(sensorA) < 2)
             {
                 txtStatus.Text = "Status: Sensor A has no data loaded.";
                 return;
             }
 
-            // Step 2: Start performance timer
             var sw = Stopwatch.StartNew();
-
-            // Step 3: Perform Selection Sort on Sensor A
             SelectionSort(sensorA);
-
-            // Step 4: Stop performance timer
             sw.Stop();
 
-            // Step 5: Display elapsed time in milliseconds
             txtMsSelA.Text = sw.ElapsedMilliseconds + " ms";
 
-            // Step 6: Refresh ListBox display
             DisplayListboxData(sensorA, lbSensorA);
-
-            // Step 7: Refresh combined sensor view
             ShowAllSensorData();
 
-            // Step 8: Update status
             txtStatus.Text = "Status: Sensor A Selection Sort completed";
         }
 
-
-        // ---------------------------------------------------------
-        // SENSOR A – Insertion Sort
-        // ---------------------------------------------------------
         private void btnInsSortA_Click(object sender, RoutedEventArgs e)
         {
-            // Step 1: Validate data exists
             if (NumberOfNodes(sensorA) < 2)
             {
                 txtStatus.Text = "Status: Sensor A has no data loaded.";
                 return;
             }
 
-            // Step 2: Start performance timer
             var sw = Stopwatch.StartNew();
-
-            // Step 3: Perform Insertion Sort on Sensor A
             InsertionSort(sensorA);
-
-            // Step 4: Stop performance timer
             sw.Stop();
 
-            // Step 5: Display elapsed time in milliseconds
             txtMsInsA.Text = sw.ElapsedMilliseconds + " ms";
 
-            // Step 6: Refresh ListBox display
             DisplayListboxData(sensorA, lbSensorA);
-
-            // Step 7: Refresh combined sensor view
             ShowAllSensorData();
 
-            // Step 8: Update status
             txtStatus.Text = "Status: Sensor A Insertion Sort completed";
         }
 
-
-        // ---------------------------------------------------------
-        // SENSOR B – Selection Sort
-        // ---------------------------------------------------------
         private void btnSelSortB_Click(object sender, RoutedEventArgs e)
         {
-            // Step 1: Validate data exists
             if (NumberOfNodes(sensorB) < 2)
             {
                 txtStatus.Text = "Status: Sensor B has no data loaded.";
                 return;
             }
 
-            // Step 2: Start performance timer
             var sw = Stopwatch.StartNew();
-
-            // Step 3: Perform Selection Sort on Sensor B
             SelectionSort(sensorB);
-
-            // Step 4: Stop performance timer
             sw.Stop();
 
-            // Step 5: Display elapsed time in milliseconds
             txtMsSelB.Text = sw.ElapsedMilliseconds + " ms";
 
-            // Step 6: Refresh ListBox display
             DisplayListboxData(sensorB, lbSensorB);
-
-            // Step 7: Refresh combined sensor view
             ShowAllSensorData();
 
-            // Step 8: Update status
             txtStatus.Text = "Status: Sensor B Selection Sort completed";
         }
 
-
-        // ---------------------------------------------------------
-        // SENSOR B – Insertion Sort
-        // ---------------------------------------------------------
         private void btnInsSortB_Click(object sender, RoutedEventArgs e)
         {
-            // Step 1: Validate data exists
             if (NumberOfNodes(sensorB) < 2)
             {
                 txtStatus.Text = "Status: Sensor B has no data loaded.";
                 return;
             }
 
-            // Step 2: Start performance timer
             var sw = Stopwatch.StartNew();
-
-            // Step 3: Perform Insertion Sort on Sensor B
             InsertionSort(sensorB);
-
-            // Step 4: Stop performance timer
             sw.Stop();
 
-            // Step 5: Display elapsed time in milliseconds
             txtMsInsB.Text = sw.ElapsedMilliseconds + " ms";
 
-            // Step 6: Refresh ListBox display
             DisplayListboxData(sensorB, lbSensorB);
-
-            // Step 7: Refresh combined sensor view
             ShowAllSensorData();
 
-            // Step 8: Update status
             txtStatus.Text = "Status: Sensor B Insertion Sort completed";
         }
+
         // =========================================================
-        // Q4.12 – Search Button Handlers 
-        // Decimal input allowed: 30.9 -> group 30
-        // =========================================================
-        // =========================================================
-        // Q4.12 – SEARCH BUTTON HANDLERS
-        // Requirement:
-        // - Allow decimal input (30.9 → grouped as 30)
-        // - Validate numeric input
-        // - Ensure data exists
-        // - Ensure list is sorted before binary search
-        // - Start stopwatch BEFORE search
-        // - Stop stopwatch AFTER search
-        // - Display elapsed ticks
-        // - Highlight found value or insertion position
+        // Q4.12 – SEARCH BUTTON HANDLERS (DUAL MODE)
+        //
+        // Auto mode rule:
+        // - If user types an integer (32)     -> GROUP MODE
+        // - If user types a decimal (32.5)   -> EXACT MODE
         // =========================================================
 
-
-        // ---------------------------------------------------------
-        // SENSOR A – Iterative Binary Search
-        // ---------------------------------------------------------
         private void btnSearchAIter_Click(object sender, RoutedEventArgs e)
         {
-            // Step 1: Validate numeric input (decimal allowed)
+            // Step 1: validate input
             if (!double.TryParse(txtSearchA.Text, out double input))
             {
                 txtStatus.Text = "Status: Enter a valid number for Sensor A";
                 return;
             }
 
-            // Step 2: Convert decimal to integer group (30.9 → 30)
-            int value = (int)input;
+            // Step 2: decide search mode
+            bool exactDecimal = input % 1 != 0;
 
-            // Step 3: Ensure data exists
+            // Step 3: ensure data exists
             if (NumberOfNodes(sensorA) < 2)
             {
                 txtStatus.Text = "Status: Sensor A has no data loaded.";
                 return;
             }
 
-            // Step 4: Ensure data is sorted before binary search
-            if (!Sorted(sensorA))
+            // Step 4: ensure list sorted for this mode
+            if (!Sorted(sensorA, exactDecimal))
             {
-                txtStatus.Text = "Status: Please sort Sensor A data first.";
+                txtStatus.Text = exactDecimal
+                    ? "Status: Please sort Sensor A by decimal values first."
+                    : "Status: Please sort Sensor A by group values first.";
                 return;
             }
 
-            // Step 5: Get maximum boundary for search
             int max = NumberOfNodes(sensorA);
 
-            // Step 6: Start performance timer
+            // Step 5: time the search
             var sw = Stopwatch.StartNew();
 
-            // Step 7: Perform iterative binary search
-            int result = BinarySearchIterative(sensorA, value, 0, max);
+            int result;
+            if (exactDecimal)
+            {
+                // Exact decimal search
+                result = BinarySearchIterativeExact(sensorA, input, 0, max);
+            }
+            else
+            {
+                // Group search (integer target)
+                int groupTarget = (int)input;
+                result = BinarySearchIterative(sensorA, groupTarget, 0, max);
+            }
 
-            // Step 8: Stop performance timer
             sw.Stop();
-
-            // Step 9: Display elapsed ticks
             txtTicksAIter.Text = sw.ElapsedTicks + " ticks";
 
-            // Step 10: Refresh ListBox display
+            // Step 6: refresh listbox
             DisplayListboxData(sensorA, lbSensorA);
 
-            // Step 11: Adjust insertion index if needed
-            int insertion = (result >= 1 && result <= lbSensorA.Items.Count) ? result - 1 : result;
+            // Step 7: adjust appendix rule only for GROUP iterative search
+            int insertionPos = result;
 
-            // Step 12: Highlight found value and neighbours
-            Highlight(sensorA, lbSensorA, value, insertion);
+            if (!exactDecimal)
+                insertionPos = (result >= 1 && result <= lbSensorA.Items.Count) ? result - 1 : result;
+
+            // Step 8: highlight
+            Highlight(sensorA, lbSensorA, input, exactDecimal, insertionPos);
         }
 
-
-        // ---------------------------------------------------------
-        // SENSOR A – Recursive Binary Search
-        // ---------------------------------------------------------
         private void btnSearchARec_Click(object sender, RoutedEventArgs e)
         {
-            // Step 1: Validate numeric input
             if (!double.TryParse(txtSearchA.Text, out double input))
             {
                 txtStatus.Text = "Status: Enter a valid number for Sensor A";
                 return;
             }
 
-            // Step 2: Convert decimal to integer group
-            int value = (int)input;
+            bool exactDecimal = input % 1 != 0;
 
-            // Step 3: Ensure data exists
             if (NumberOfNodes(sensorA) < 2)
             {
                 txtStatus.Text = "Status: Sensor A has no data loaded.";
                 return;
             }
 
-            // Step 4: Ensure data is sorted
-            if (!Sorted(sensorA))
+            if (!Sorted(sensorA, exactDecimal))
             {
-                txtStatus.Text = "Status: Please sort Sensor A data first.";
+                txtStatus.Text = exactDecimal
+                    ? "Status: Please sort Sensor A by decimal values first."
+                    : "Status: Please sort Sensor A by group values first.";
                 return;
             }
 
-            // Step 5: Get maximum boundary
             int max = NumberOfNodes(sensorA);
 
-            // Step 6: Start performance timer
             var sw = Stopwatch.StartNew();
 
-            // Step 7: Perform recursive binary search
-            int idxOrIns = BinarySearchRecursive(sensorA, value, 0, max);
+            int result;
+            if (exactDecimal)
+            {
+                result = BinarySearchRecursiveExact(sensorA, input, 0, max);
+            }
+            else
+            {
+                int groupTarget = (int)input;
+                result = BinarySearchRecursive(sensorA, groupTarget, 0, max);
+            }
 
-            // Step 8: Stop performance timer
             sw.Stop();
-
-            // Step 9: Display elapsed ticks
             txtTicksARec.Text = sw.ElapsedTicks + " ticks";
 
-            // Step 10: Refresh ListBox display
             DisplayListboxData(sensorA, lbSensorA);
 
-            // Step 11: Highlight found value or insertion position
-            Highlight(sensorA, lbSensorA, value, idxOrIns);
+            Highlight(sensorA, lbSensorA, input, exactDecimal, result);
         }
 
-
-        // ---------------------------------------------------------
-        // SENSOR B – Iterative Binary Search
-        // ---------------------------------------------------------
         private void btnSearchBIter_Click(object sender, RoutedEventArgs e)
         {
-            // Step 1: Validate numeric input
             if (!double.TryParse(txtSearchB.Text, out double input))
             {
                 txtStatus.Text = "Status: Enter a valid number for Sensor B";
                 return;
             }
 
-            // Step 2: Convert decimal to integer group
-            int value = (int)input;
+            bool exactDecimal = input % 1 != 0;
 
-            // Step 3: Ensure data exists
             if (NumberOfNodes(sensorB) < 2)
             {
                 txtStatus.Text = "Status: Sensor B has no data loaded.";
                 return;
             }
 
-            // Step 4: Ensure data is sorted
-            if (!Sorted(sensorB))
+            if (!Sorted(sensorB, exactDecimal))
             {
-                txtStatus.Text = "Status: Please sort Sensor B data first.";
+                txtStatus.Text = exactDecimal
+                    ? "Status: Please sort Sensor B by decimal values first."
+                    : "Status: Please sort Sensor B by group values first.";
                 return;
             }
 
-            // Step 5: Get maximum boundary
             int max = NumberOfNodes(sensorB);
 
-            // Step 6: Start performance timer
             var sw = Stopwatch.StartNew();
 
-            // Step 7: Perform iterative binary search
-            int result = BinarySearchIterative(sensorB, value, 0, max);
+            int result;
+            if (exactDecimal)
+            {
+                result = BinarySearchIterativeExact(sensorB, input, 0, max);
+            }
+            else
+            {
+                int groupTarget = (int)input;
+                result = BinarySearchIterative(sensorB, groupTarget, 0, max);
+            }
 
-            // Step 8: Stop performance timer
             sw.Stop();
-
-            // Step 9: Display elapsed ticks
             txtTicksBIter.Text = sw.ElapsedTicks + " ticks";
 
-            // Step 10: Refresh ListBox display
             DisplayListboxData(sensorB, lbSensorB);
 
-            // Step 11: Adjust insertion index if needed
-            int insertion = (result >= 1 && result <= lbSensorB.Items.Count) ? result - 1 : result;
+            int insertionPos = result;
 
-            // Step 12: Highlight found value and neighbours
-            Highlight(sensorB, lbSensorB, value, insertion);
+            if (!exactDecimal)
+                insertionPos = (result >= 1 && result <= lbSensorB.Items.Count) ? result - 1 : result;
+
+            Highlight(sensorB, lbSensorB, input, exactDecimal, insertionPos);
         }
 
-
-        // ---------------------------------------------------------
-        // SENSOR B – Recursive Binary Search
-        // ---------------------------------------------------------
         private void btnSearchBRec_Click(object sender, RoutedEventArgs e)
         {
-            // Step 1: Validate numeric input
             if (!double.TryParse(txtSearchB.Text, out double input))
             {
                 txtStatus.Text = "Status: Enter a valid number for Sensor B";
                 return;
             }
 
-            // Step 2: Convert decimal to integer group
-            int value = (int)input;
+            bool exactDecimal = input % 1 != 0;
 
-            // Step 3: Ensure data exists
             if (NumberOfNodes(sensorB) < 2)
             {
                 txtStatus.Text = "Status: Sensor B has no data loaded.";
                 return;
             }
 
-            // Step 4: Ensure data is sorted
-            if (!Sorted(sensorB))
+            if (!Sorted(sensorB, exactDecimal))
             {
-                txtStatus.Text = "Status: Please sort Sensor B data first.";
+                txtStatus.Text = exactDecimal
+                    ? "Status: Please sort Sensor B by decimal values first."
+                    : "Status: Please sort Sensor B by group values first.";
                 return;
             }
 
-            // Step 5: Get maximum boundary
             int max = NumberOfNodes(sensorB);
 
-            // Step 6: Start performance timer
             var sw = Stopwatch.StartNew();
 
-            // Step 7: Perform recursive binary search
-            int idxOrIns = BinarySearchRecursive(sensorB, value, 0, max);
+            int result;
+            if (exactDecimal)
+            {
+                result = BinarySearchRecursiveExact(sensorB, input, 0, max);
+            }
+            else
+            {
+                int groupTarget = (int)input;
+                result = BinarySearchRecursive(sensorB, groupTarget, 0, max);
+            }
 
-            // Step 8: Stop performance timer
             sw.Stop();
-
-            // Step 9: Display elapsed ticks
             txtTicksBRec.Text = sw.ElapsedTicks + " ticks";
 
-            // Step 10: Refresh ListBox display
             DisplayListboxData(sensorB, lbSensorB);
 
-            // Step 11: Highlight found value or insertion position
-            Highlight(sensorB, lbSensorB, value, idxOrIns);
+            Highlight(sensorB, lbSensorB, input, exactDecimal, result);
         }
+
         // =========================================================
         // Reset UI after Load
         // =========================================================
@@ -820,11 +868,10 @@ namespace GalileoDataLab
             txtMsInsB.Clear();
         }
 
-
         // =========================================================
-        // TEST HELPER – Highlight Logic (Unit Test)
+        // TEST HELPER – Highlight Logic 
         //
-        // Rule:
+        // Rule (matches lecturer requirement):
         // - Group = integer part of value (32.1234 → 32)
         // - If found → return ALL matching indices
         // - If not found → return closest index
@@ -837,91 +884,38 @@ namespace GalileoDataLab
             int target,
             int insertion)
         {
-            // List to store matching or closest indices
             List<int> indices = new List<int>();
 
-
-            // =====================================================
-            // SECTION A – CHECK IF TARGET EXISTS (FOUND CASE)
-            // =====================================================
-
-            // Step 1: Iterate through entire LinkedList
+            // ---------- A) FOUND: return all indices where group == target ----------
             int idx = 0;
             for (var node = list.First; node != null; node = node.Next, idx++)
             {
-                // Step 2: Extract integer group of value
                 int group = (int)node.Value;
-
-                // Step 3: If integer part matches target, store index
                 if (group == target)
                     indices.Add(idx);
             }
 
-            // Step 4: If any matches found, return all of them
             if (indices.Count > 0)
                 return (indices, $"FOUND {target}");
 
-
-
-            // =====================================================
-            // SECTION B – TARGET NOT FOUND → FIND CLOSEST
-            // =====================================================
-
+            // ---------- B) NOT FOUND: return closest group index(es) ----------
             int count = list.Count;
-
-            // Step 5: Handle empty list edge case
             if (count == 0)
                 return (new List<int>(), "NOT FOUND (empty list)");
 
+            // Clamp insertion position
+            if (insertion < 0) insertion = 0;
+            if (insertion > count) insertion = count;
 
-            // =====================================================
-            // STEP 6 – Clamp insertion position to valid range
-            // =====================================================
-
-            if (insertion < 0)
-                insertion = 0;
-
-            if (insertion > count)
-                insertion = count;
-
-
-            // Determine neighbouring indices
             int right = insertion;
             int left = insertion - 1;
 
-
-            // =====================================================
-            // STEP 7 – Clamp left and right boundaries
-            // =====================================================
-
+            // Clamp both sides
             if (right < 0) right = 0;
             if (right > count - 1) right = count - 1;
 
             if (left < 0) left = 0;
             if (left > count - 1) left = count - 1;
-
-
-            // =====================================================
-            // STEP 8 – Compare distances to target
-            // =====================================================
-            // =====================================================
-            // THIS BLOCK CALCULATES WHICH VALUE IS CLOSER
-            //
-            // I compare the target value with:
-            // - the value on the left side
-            // - the value on the right side
-            //
-            // "Diff" means numeric difference (distance).            
-            //Math.Abs() is  Returns the absolute value of a number
-            // I use Math.Abs so the result is always positive.
-            //
-            // Example:
-            // target = 30
-            // leftGroup = 28 is diff = 2
-            // rightGroup = 33 is diff = 3
-            //
-            // Since 2 < 3, left is closer.
-            // =====================================================
 
             int leftGroup = (int)list.ElementAt(left);
             int rightGroup = (int)list.ElementAt(right);
@@ -929,34 +923,15 @@ namespace GalileoDataLab
             int leftDiff = Math.Abs(target - leftGroup);
             int rightDiff = Math.Abs(target - rightGroup);
 
-
-            // =====================================================
-            // STEP 9 – Handle tie case (equal distance)
-            // =====================================================
-
+            // Tie -> return both
             if (leftDiff == rightDiff && left != right)
-                return (
-                    new List<int> { left, right },
-                    $"NOT FOUND {target} (tie {leftGroup}/{rightGroup})"
-                );
+                return (new List<int> { left, right }, $"NOT FOUND {target} (tie {leftGroup}/{rightGroup})");
 
-
-            // =====================================================
-            // STEP 10 – Return closest single index
-            // =====================================================
-
+            // Closest single
             if (leftDiff < rightDiff)
-                return (
-                    new List<int> { left },
-                    $"NOT FOUND {target} (closest {leftGroup})"
-                );
+                return (new List<int> { left }, $"NOT FOUND {target} (closest {leftGroup})");
 
-            return (
-                new List<int> { right },
-                $"NOT FOUND {target} (closest {rightGroup})"
-            );
+            return (new List<int> { right }, $"NOT FOUND {target} (closest {rightGroup})");
         }
     }
-
 }
-
