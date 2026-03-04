@@ -23,16 +23,15 @@ namespace GalileoDataLab
     /// - Search using Binary Search (Iterative and Recursive)
     /// - Measure performance (Sort: milliseconds, Search: ticks)
     ///
-    /// Lecturer requirement (Search highlight):
-    /// - If target is 32 -> highlight ALL values 32.xxxx (integer-part group)
-    /// - If no 32.xxxx exists -> show Not found and highlight closest group value(s)
+    /// Highlight (Lecturer request):
+    /// - Whole number input (32 / 32.0000): highlight ALL 32.xxxx values (integer part = 32)
+    /// - Decimal input (32.1234): highlight exact 4dp matches, else closest value(s)
     /// =========================================================
     /// </summary>
     public partial class MainWindow : Window
     {
         // =========================================================
-        // Q4.1 – Global Data Structures
-        // Only 2 global variables allowed (Sensor A + Sensor B)
+        // Q4.1 – Only 2 global variables allowed
         // =========================================================
         private LinkedList<double> sensorA = new LinkedList<double>();
         private LinkedList<double> sensorB = new LinkedList<double>();
@@ -47,7 +46,6 @@ namespace GalileoDataLab
         // =========================================================
         private void LoadData()
         {
-            // required fixed dataset size from assessment
             const int SIZE = 400;
 
             if (!double.TryParse(txtSigma.Text, out double sigma) ||
@@ -134,7 +132,6 @@ namespace GalileoDataLab
 
             DisplayListboxData(sensorA, lbSensorA);
             DisplayListboxData(sensorB, lbSensorB);
-
             ShowAllSensorData();
 
             ResetUiAfterLoad();
@@ -146,43 +143,26 @@ namespace GalileoDataLab
         // =========================================================
         private bool SelectionSort(LinkedList<double> list)
         {
-            // stop if list is null
             if (list == null) return false;
 
-            // get total number of nodes
             int max = NumberOfNodes(list);
-
-            // nothing to sort if list has less than 2 values
             if (max < 2) return false;
 
-            // outer loop selects current position
             for (int i = 0; i < max - 1; i++)
             {
-                // assume current index is the minimum
                 int min = i;
 
-                // search remaining list for smaller value
                 for (int j = i + 1; j < max; j++)
                 {
-                    // update min index if smaller value found
                     if (list.ElementAt(j) < list.ElementAt(min))
                         min = j;
                 }
 
-                // move to node at index i
-                LinkedListNode<double>? nodeI = list.First;
-                for (int k = 0; k < i && nodeI != null; k++)
-                    nodeI = nodeI.Next;
+                var nodeI = GetNodeAt(list, i);
+                var nodeMin = GetNodeAt(list, min);
 
-                // move to node at index min
-                LinkedListNode<double>? nodeMin = list.First;
-                for (int k = 0; k < min && nodeMin != null; k++)
-                    nodeMin = nodeMin.Next;
-
-                // safety check
                 if (nodeI == null || nodeMin == null) return false;
 
-                // swap values between current node and minimum node
                 double temp = nodeMin.Value;
                 nodeMin.Value = nodeI.Value;
                 nodeI.Value = temp;
@@ -196,39 +176,25 @@ namespace GalileoDataLab
         // =========================================================
         private bool InsertionSort(LinkedList<double> list)
         {
-            // stop if list is null
             if (list == null) return false;
 
-            // get total number of nodes
             int max = NumberOfNodes(list);
-
-            // no sorting needed if list has less than 2 values
             if (max < 2) return false;
 
-            // outer loop moves through list
             for (int i = 0; i < max - 1; i++)
             {
-                // inner loop shifts current value left until correct position
                 for (int j = i + 1; j > 0; j--)
                 {
-                    // compare neighbouring values
                     if (list.ElementAt(j - 1) > list.ElementAt(j))
                     {
-                        // move to node at index (j - 1)
-                        LinkedListNode<double>? prevNode = list.First;
-                        for (int k = 0; k < j - 1 && prevNode != null; k++)
-                            prevNode = prevNode.Next;
+                        var prev = GetNodeAt(list, j - 1);
+                        if (prev == null || prev.Next == null) return false;
 
-                        // safety check
-                        if (prevNode == null || prevNode.Next == null) return false;
+                        var cur = prev.Next;
 
-                        // next node is current position (j)
-                        LinkedListNode<double> curNode = prevNode.Next;
-
-                        // swap adjacent values
-                        double temp = prevNode.Value;
-                        prevNode.Value = curNode.Value;
-                        curNode.Value = temp;
+                        double temp = prev.Value;
+                        prev.Value = cur.Value;
+                        cur.Value = temp;
                     }
                 }
             }
@@ -236,190 +202,412 @@ namespace GalileoDataLab
             return true;
         }
 
+        // Helper: Get node at index
+        private LinkedListNode<double>? GetNodeAt(LinkedList<double> list, int index)
+        {
+            int i = 0;
+            var node = list.First;
+
+            while (node != null)
+            {
+                if (i == index) return node;
+                node = node.Next;
+                i++;
+            }
+
+            return null;
+        }
+
         // =========================================================
         // Q4.9 – BinarySearchIterative()
-        // Lecturer requirement: compare by integer group
+        // Compare by integer part
+        // Returns 1-based index when found, else insertion position
         // =========================================================
-        private int BinarySearchIterative(LinkedList<double> list, int searchValue, int minimum, int maximum)
+        private int BinarySearchIterative(LinkedList<double> list, int searchNumber, int minimum, int maximum)
         {
             while (minimum <= maximum - 1)
             {
                 int middle = (minimum + maximum) / 2;
+                int middleNumber = (int)Math.Floor(list.ElementAt(middle));
 
-                // compare by integer part (32.1234 -> 32)
-                int middleGroup = (int)list.ElementAt(middle);
+                if (searchNumber == middleNumber)
+                    return middle + 1;
 
-                if (searchValue == middleGroup)
-                    return ++middle; // appendix behaviour
-
-                else if (searchValue < middleGroup)
+                if (searchNumber < middleNumber)
                     maximum = middle - 1;
                 else
                     minimum = middle + 1;
             }
 
-            // not found, return insertion position
             return minimum;
         }
 
         // =========================================================
         // Q4.10 – BinarySearchRecursive()
-        // Lecturer requirement: compare by integer group
+        // Compare by integer part
+        // Returns 0-based index when found, else insertion position
         // =========================================================
-        public int BinarySearchRecursive(LinkedList<double> list, int searchValue, int minimum, int maximum)
+        public int BinarySearchRecursive(LinkedList<double> list, int searchNumber, int minimum, int maximum)
         {
             if (minimum <= maximum - 1)
             {
                 int middle = (minimum + maximum) / 2;
+                int middleNumber = (int)Math.Floor(list.ElementAt(middle));
 
-                int middleGroup = (int)list.ElementAt(middle);
-
-                if (searchValue == middleGroup)
+                if (searchNumber == middleNumber)
                     return middle;
 
-                else if (searchValue < middleGroup)
-                    return BinarySearchRecursive(list, searchValue, minimum, middle - 1);
-                else
-                    return BinarySearchRecursive(list, searchValue, middle + 1, maximum);
+                if (searchNumber < middleNumber)
+                    return BinarySearchRecursive(list, searchNumber, minimum, middle - 1);
+
+                return BinarySearchRecursive(list, searchNumber, middle + 1, maximum);
             }
 
-            // not found, return insertion position
             return minimum;
         }
 
         // =========================================================
-        // IsSortedByGroup()
-        // Checks list is sorted by integer groups before binary search
+        // Sorted check
         // =========================================================
-        private bool IsSortedByGroup(LinkedList<double> list)
+        private bool Sorted(LinkedList<double> list)
         {
-            var firstNode = list.First;
-            if (firstNode == null) return false;
+            var node = list.First;
+            if (node == null) return false;
 
-            int prev = (int)firstNode.Value;
-            var node = firstNode.Next;
+            double prev = node.Value;
+            node = node.Next;
 
             while (node != null)
             {
-                int cur = (int)node.Value;
-                if (cur < prev) return false;
-
-                prev = cur;
+                if (node.Value < prev) return false;
+                prev = node.Value;
                 node = node.Next;
             }
-
             return true;
         }
 
         // =========================================================
-        // HighlightGroup()
-        // - Highlights ALL target group values (example: 32.xxxx)
-        // - If not found, highlights the closest group value(s)
+        // Parse search value:
+        // - rounded4: rounded to 4 decimals
+        // - numberPart: integer part (32.1234 -> 32)
+        // - whole: true if input is effectively integer
         // =========================================================
-        private void HighlightGroup(LinkedList<double> list, ListBox lb, int target, int insertionPosCandidate)
+        private bool TryParseSearch(TextBox txt, out double rounded4, out int numberPart, out bool whole)
         {
-            // stop if ListBox has no items to highlight
-            if (lb.Items.Count == 0) return;
+            rounded4 = 0;
+            numberPart = 0;
+            whole = true;
 
-            // clear old highlights 
+            if (!double.TryParse(txt.Text, out double raw))
+                return false;
+
+            rounded4 = Math.Round(raw, 4);
+            numberPart = (int)Math.Floor(rounded4);
+
+            whole = Math.Abs(rounded4 - Math.Round(rounded4, 0)) < 0.00005;
+            return true;
+        }
+
+        // =========================================================
+        // Highlight all values where integer part equals targetNumber
+        // =========================================================
+        private bool HighlightIntegerPart(LinkedList<double> list, ListBox lb, int targetNumber)
+        {
             lb.SelectedItems.Clear();
 
-            // =========================================================
-            // PART A: FOUND
-            // Highlight all values that belong to the target group.
-            // Example: target = 32 -> highlight every 32.xxxx value.
-            // =========================================================
-            int idx = 0;                 // current item index in ListBox
-            int firstMatchIndex = -1;    // used to scroll to first match
+            int idx = 0;
+            int first = -1;
 
-            // walk through LinkedList and ListBox at the same time
             for (var node = list.First; node != null; node = node.Next, idx++)
             {
-                // group is the integer part (32.1234 -> 32)
-                int group = (int)node.Value;
-
-                // if this value is in the target group, select it
-                if (group == target)
+                int integerPart = (int)Math.Floor(node.Value);
+                if (integerPart == targetNumber)
                 {
-                    // remember first matched index so we can scroll to it
-                    if (firstMatchIndex == -1)
-                        firstMatchIndex = idx;
-
-                    // highlight this ListBox item
+                    if (first == -1) first = idx;
                     lb.SelectedItems.Add(lb.Items[idx]);
                 }
             }
 
-            // if at least one match was found
-            if (firstMatchIndex != -1)
+            if (first != -1)
             {
-                // scroll to the first highlighted value
-                lb.ScrollIntoView(lb.Items[firstMatchIndex]);
-
-                // show found message
-                txtStatus.Text = $"Status: Found {target}";
-                return;
+                lb.ScrollIntoView(lb.Items[first]);
+                txtStatus.Text = $"Status: Found {targetNumber}";
+                return true;
             }
 
-            // =========================================================
-            // PART B: NOT FOUND
-            // If no target group exists, highlight the closest group.
-            // This shows the nearest available values to the user.
-            // =========================================================
-            int count = lb.Items.Count;
-
-            // keep insertion position inside valid bounds
-            if (insertionPosCandidate < 0) insertionPosCandidate = 0;
-            if (insertionPosCandidate > count) insertionPosCandidate = count;
-
-            // choose the positions around the insertion point
-            int right = insertionPosCandidate;
-            int left = insertionPosCandidate - 1;
-
-            // clamp right index
-            if (right < 0) right = 0;
-            if (right > count - 1) right = count - 1;
-
-            // clamp left index
-            if (left < 0) left = 0;
-            if (left > count - 1) left = count - 1;
-
-            // get group values at left and right positions
-            int leftGroup = (int)list.ElementAt(left);
-            int rightGroup = (int)list.ElementAt(right);
-
-            // calculate which side is closer to target
-            int leftDiff = Math.Abs(target - leftGroup);
-            int rightDiff = Math.Abs(target - rightGroup);
-
-            // pick closest side
-            bool pickLeft = leftDiff <= rightDiff;
-            bool pickRight = rightDiff <= leftDiff;
-
-            // highlight left item if it is closest 
-            if (pickLeft)
-                lb.SelectedItems.Add(lb.Items[left]);
-
-            // highlight right item if it is closest  and different index
-            if (pickRight && right != left)
-                lb.SelectedItems.Add(lb.Items[right]);
-
-            // scroll to the closest highlighted item
-            lb.ScrollIntoView(lb.Items[pickLeft ? left : right]);
-
-            // show NOT FOUND message with closest group
-            if (pickLeft && pickRight && left != right && leftDiff == rightDiff)
-                txtStatus.Text = $"Status: NOT FOUND. Closest groups: {leftGroup} and {rightGroup}.";
-            else
-                txtStatus.Text = $"Status: NOT FOUND. Closest group: {(pickLeft ? leftGroup : rightGroup)}.";
+            return false;
         }
 
         // =========================================================
-        // Q4.11 – Sort Button Methods
+        // Highlight exact 4dp (or closest if not found)
+        // =========================================================
+        private void HighlightExactOrClosest(LinkedList<double> list, ListBox lb, double targetRounded4)
+        {
+            lb.SelectedItems.Clear();
+
+            int idx = 0;
+            int first = -1;
+            bool foundAny = false;
+
+            for (var node = list.First; node != null; node = node.Next, idx++)
+            {
+                double v = Math.Round(node.Value, 4);
+                if (Math.Abs(v - targetRounded4) < 0.00005)
+                {
+                    foundAny = true;
+                    if (first == -1) first = idx;
+                    lb.SelectedItems.Add(lb.Items[idx]);
+                }
+            }
+
+            if (foundAny)
+            {
+                lb.ScrollIntoView(lb.Items[first]);
+                txtStatus.Text = $"Status: Found {targetRounded4:F4}";
+                return;
+            }
+
+            int best1 = -1, best2 = -1;
+            double bestDiff = double.MaxValue;
+
+            idx = 0;
+            for (var node = list.First; node != null; node = node.Next, idx++)
+            {
+                double v = Math.Round(node.Value, 4);
+                double diff = Math.Abs(v - targetRounded4);
+
+                if (diff < bestDiff)
+                {
+                    bestDiff = diff;
+                    best1 = idx;
+                    best2 = -1;
+                }
+                else if (Math.Abs(diff - bestDiff) < 0.00005)
+                {
+                    best2 = idx;
+                }
+            }
+
+            if (best1 != -1)
+            {
+                lb.SelectedItems.Add(lb.Items[best1]);
+                if (best2 != -1 && best2 != best1)
+                    lb.SelectedItems.Add(lb.Items[best2]);
+
+                lb.ScrollIntoView(lb.Items[best1]);
+                txtStatus.Text = $"Status: NOT FOUND. Closest value(s) highlighted for {targetRounded4:F4}.";
+            }
+            else
+            {
+                txtStatus.Text = "Status: NOT FOUND.";
+            }
+        }
+
+        // =========================================================
+        // Highlight closest integer part around insertion position
+        // =========================================================
+        private void HighlightClosestInteger(LinkedList<double> list, ListBox lb, int targetNumber, int insertion)
+        {
+            if (lb.Items.Count == 0) return;
+
+            if (insertion < 0) insertion = 0;
+            if (insertion >= lb.Items.Count) insertion = lb.Items.Count - 1;
+
+            int left = insertion - 1;
+            if (left < 0) left = 0;
+
+            int leftValue = (int)list.ElementAt(left);
+            int rightValue = (int)list.ElementAt(insertion);
+
+            int leftDiff = Math.Abs(targetNumber - leftValue);
+            int rightDiff = Math.Abs(targetNumber - rightValue);
+
+            int pickIndex = (leftDiff <= rightDiff) ? left : insertion;
+
+            lb.SelectedItems.Clear();
+            lb.SelectedItems.Add(lb.Items[pickIndex]);
+            lb.ScrollIntoView(lb.Items[pickIndex]);
+
+            txtStatus.Text = "Status: NOT FOUND. Showing closest value.";
+        }
+
+        // =========================================================
+        // SEARCH BUTTONS
+        // =========================================================
+        private void btnSearchAIter_Click(object sender, RoutedEventArgs e)
+        {
+            if (!TryParseSearch(txtSearchA, out double target4, out int numberPart, out bool whole))
+            {
+                txtStatus.Text = "Status: Enter a valid number for Sensor A";
+                return;
+            }
+
+            if (NumberOfNodes(sensorA) < 2)
+            {
+                txtStatus.Text = "Status: Sensor A has no data loaded.";
+                return;
+            }
+
+            if (!Sorted(sensorA))
+            {
+                txtStatus.Text = "Status: Please sort Sensor A first.";
+                return;
+            }
+
+            Stopwatch sw = Stopwatch.StartNew();
+            int result = BinarySearchIterative(sensorA, numberPart, 0, NumberOfNodes(sensorA));
+            sw.Stop();
+
+            txtTicksAIter.Text = sw.ElapsedTicks + " ticks";
+            DisplayListboxData(sensorA, lbSensorA);
+
+            if (whole)
+            {
+                bool found = HighlightIntegerPart(sensorA, lbSensorA, numberPart);
+                if (!found)
+                {
+                    int insertion = (result >= 1 && result <= lbSensorA.Items.Count) ? result - 1 : result;
+                    HighlightClosestInteger(sensorA, lbSensorA, numberPart, insertion);
+                }
+            }
+            else
+            {
+                HighlightExactOrClosest(sensorA, lbSensorA, target4);
+            }
+        }
+
+        private void btnSearchARec_Click(object sender, RoutedEventArgs e)
+        {
+            if (!TryParseSearch(txtSearchA, out double target4, out int numberPart, out bool whole))
+            {
+                txtStatus.Text = "Status: Enter a valid number for Sensor A";
+                return;
+            }
+
+            if (NumberOfNodes(sensorA) < 2)
+            {
+                txtStatus.Text = "Status: Sensor A has no data loaded.";
+                return;
+            }
+
+            if (!Sorted(sensorA))
+            {
+                txtStatus.Text = "Status: Please sort Sensor A first.";
+                return;
+            }
+
+            Stopwatch sw = Stopwatch.StartNew();
+            int indexOrInsert = BinarySearchRecursive(sensorA, numberPart, 0, NumberOfNodes(sensorA));
+            sw.Stop();
+
+            txtTicksARec.Text = sw.ElapsedTicks + " ticks";
+            DisplayListboxData(sensorA, lbSensorA);
+
+            if (whole)
+            {
+                bool found = HighlightIntegerPart(sensorA, lbSensorA, numberPart);
+                if (!found)
+                    HighlightClosestInteger(sensorA, lbSensorA, numberPart, indexOrInsert);
+            }
+            else
+            {
+                HighlightExactOrClosest(sensorA, lbSensorA, target4);
+            }
+        }
+
+        private void btnSearchBIter_Click(object sender, RoutedEventArgs e)
+        {
+            if (!TryParseSearch(txtSearchB, out double target4, out int numberPart, out bool whole))
+            {
+                txtStatus.Text = "Status: Enter a valid number for Sensor B";
+                return;
+            }
+
+            if (NumberOfNodes(sensorB) < 2)
+            {
+                txtStatus.Text = "Status: Sensor B has no data loaded.";
+                return;
+            }
+
+            if (!Sorted(sensorB))
+            {
+                txtStatus.Text = "Status: Please sort Sensor B first.";
+                return;
+            }
+
+            Stopwatch sw = Stopwatch.StartNew();
+            int result = BinarySearchIterative(sensorB, numberPart, 0, NumberOfNodes(sensorB));
+            sw.Stop();
+
+            txtTicksBIter.Text = sw.ElapsedTicks + " ticks";
+            DisplayListboxData(sensorB, lbSensorB);
+
+            if (whole)
+            {
+                bool found = HighlightIntegerPart(sensorB, lbSensorB, numberPart);
+                if (!found)
+                {
+                    int insertion = (result >= 1 && result <= lbSensorB.Items.Count) ? result - 1 : result;
+                    HighlightClosestInteger(sensorB, lbSensorB, numberPart, insertion);
+                }
+            }
+            else
+            {
+                HighlightExactOrClosest(sensorB, lbSensorB, target4);
+            }
+        }
+
+        private void btnSearchBRec_Click(object sender, RoutedEventArgs e)
+        {
+            if (!TryParseSearch(txtSearchB, out double target4, out int numberPart, out bool whole))
+            {
+                txtStatus.Text = "Status: Enter a valid number for Sensor B";
+                return;
+            }
+
+            if (NumberOfNodes(sensorB) < 2)
+            {
+                txtStatus.Text = "Status: Sensor B has no data loaded.";
+                return;
+            }
+
+            if (!Sorted(sensorB))
+            {
+                txtStatus.Text = "Status: Please sort Sensor B first.";
+                return;
+            }
+
+            Stopwatch sw = Stopwatch.StartNew();
+            int indexOrInsert = BinarySearchRecursive(sensorB, numberPart, 0, NumberOfNodes(sensorB));
+            sw.Stop();
+
+            txtTicksBRec.Text = sw.ElapsedTicks + " ticks";
+            DisplayListboxData(sensorB, lbSensorB);
+
+            if (whole)
+            {
+                bool found = HighlightIntegerPart(sensorB, lbSensorB, numberPart);
+                if (!found)
+                    HighlightClosestInteger(sensorB, lbSensorB, numberPart, indexOrInsert);
+            }
+            else
+            {
+                HighlightExactOrClosest(sensorB, lbSensorB, target4);
+            }
+        }
+
+        // =========================================================
+        // SORT BUTTONS
         // =========================================================
         private void btnSelSortA_Click(object sender, RoutedEventArgs e)
         {
-            var sw = Stopwatch.StartNew();
+            if (NumberOfNodes(sensorA) < 2)
+            {
+                txtStatus.Text = "Status: Sensor A has no data loaded.";
+                return;
+            }
+
+            Stopwatch sw = Stopwatch.StartNew();
             SelectionSort(sensorA);
             sw.Stop();
 
@@ -433,7 +621,13 @@ namespace GalileoDataLab
 
         private void btnInsSortA_Click(object sender, RoutedEventArgs e)
         {
-            var sw = Stopwatch.StartNew();
+            if (NumberOfNodes(sensorA) < 2)
+            {
+                txtStatus.Text = "Status: Sensor A has no data loaded.";
+                return;
+            }
+
+            Stopwatch sw = Stopwatch.StartNew();
             InsertionSort(sensorA);
             sw.Stop();
 
@@ -447,7 +641,13 @@ namespace GalileoDataLab
 
         private void btnSelSortB_Click(object sender, RoutedEventArgs e)
         {
-            var sw = Stopwatch.StartNew();
+            if (NumberOfNodes(sensorB) < 2)
+            {
+                txtStatus.Text = "Status: Sensor B has no data loaded.";
+                return;
+            }
+
+            Stopwatch sw = Stopwatch.StartNew();
             SelectionSort(sensorB);
             sw.Stop();
 
@@ -461,7 +661,13 @@ namespace GalileoDataLab
 
         private void btnInsSortB_Click(object sender, RoutedEventArgs e)
         {
-            var sw = Stopwatch.StartNew();
+            if (NumberOfNodes(sensorB) < 2)
+            {
+                txtStatus.Text = "Status: Sensor B has no data loaded.";
+                return;
+            }
+
+            Stopwatch sw = Stopwatch.StartNew();
             InsertionSort(sensorB);
             sw.Stop();
 
@@ -474,223 +680,102 @@ namespace GalileoDataLab
         }
 
         // =========================================================
-        // Q4.12 – Search Button Methods (ticks)
+        // Decimal input validation: digits + one dot + max 4 decimals
         // =========================================================
-        private void btnSearchAIter_Click(object sender, RoutedEventArgs e)
+        private void Decimal4_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            // Step 1: validate user input (must be an integer)
-            if (!int.TryParse(txtSearchA.Text, out int value))
+            if (sender is not TextBox tb)
             {
-                txtStatus.Text = "Status: Enter a valid integer for Sensor A";
+                e.Handled = true;
                 return;
             }
 
-            // Step 2: check data exists (binary search needs data)
-            if (NumberOfNodes(sensorA) < 2)
+            char ch = e.Text.Length > 0 ? e.Text[0] : '\0';
+
+            if (char.IsDigit(ch))
             {
-                txtStatus.Text = "Status: Sensor A has no data loaded.";
+                if (tb.Text.Contains('.'))
+                {
+                    int dotIndex = tb.Text.IndexOf('.');
+                    int decimals = tb.Text.Length - dotIndex - 1;
+
+                    if (tb.SelectionStart > dotIndex && decimals >= 4 && tb.SelectionLength == 0)
+                    {
+                        e.Handled = true;
+                        return;
+                    }
+                }
+
+                e.Handled = false;
                 return;
             }
 
-            // Step 3: stop if data is not sorted (binary search will be wrong)
-            if (!IsSortedByGroup(sensorA))
+            if (ch == '.')
             {
-                txtStatus.Text = "Status: Please sort Sensor A data first.";
+                e.Handled = tb.Text.Contains('.');
                 return;
             }
 
-            // Step 4: set search range using number of nodes
-            int max = NumberOfNodes(sensorA);
-
-            // Step 5: start timing before search
-            var sw = Stopwatch.StartNew();
-
-            // Step 6: run iterative binary search
-            int result = BinarySearchIterative(sensorA, value, 0, max);
-
-            // Step 7: stop timing after search
-            sw.Stop();
-
-            // Step 8: show elapsed ticks in textbox
-            txtTicksAIter.Text = sw.ElapsedTicks + " ticks";
-
-            // Step 9: refresh ListBox values
-            DisplayListboxData(sensorA, lbSensorA);
-
-            // Step 10: convert search return to a safe index to use for "closest"
-            // iterative returns:
-            // - ++middle (1-based) when found
-            // - insertion position when not found
-            int insertionPosCandidate;
-            if (result >= 1 && result <= lbSensorA.Items.Count)
-                insertionPosCandidate = result - 1; // convert to 0-based index
-            else
-                insertionPosCandidate = result;
-
-            // Step 11: highlight all matching group values or closest group
-            HighlightGroup(sensorA, lbSensorA, value, insertionPosCandidate);
+            e.Handled = true;
         }
 
-        private void btnSearchARec_Click(object sender, RoutedEventArgs e)
+        private void Decimal4_Pasting(object sender, DataObjectPastingEventArgs e)
         {
-            // Step 1: validate user input (must be an integer)
-            if (!int.TryParse(txtSearchA.Text, out int value))
+            TextBox? tb = sender as TextBox;
+
+            if (tb == null)
             {
-                txtStatus.Text = "Status: Enter a valid integer for Sensor A";
-                return;
-            }
-
-            // Step 2: check data exists
-            if (NumberOfNodes(sensorA) < 2)
-            {
-                txtStatus.Text = "Status: Sensor A has no data loaded.";
-                return;
-            }
-
-            // Step 3: stop if data is not sorted
-            if (!IsSortedByGroup(sensorA))
-            {
-                txtStatus.Text = "Status: Please sort Sensor A data first.";
-                return;
-            }
-
-            // Step 4: set search range
-            int max = NumberOfNodes(sensorA);
-
-            // Step 5: start timing before recursive search
-            var sw = Stopwatch.StartNew();
-
-            // Step 6: run recursive binary search
-            int indexOrInsert = BinarySearchRecursive(sensorA, value, 0, max);
-
-            // Step 7: stop timing after search
-            sw.Stop();
-
-            // Step 8: show ticks in UI
-            txtTicksARec.Text = sw.ElapsedTicks + " ticks";
-
-            // Step 9: refresh ListBox display
-            DisplayListboxData(sensorA, lbSensorA);
-
-            // Step 10: highlight all matching group values or closest group
-            HighlightGroup(sensorA, lbSensorA, value, indexOrInsert);
-        }
-
-        // =========================================================
-        // SENSOR B SEARCH METHODS (these were missing)
-        // =========================================================
-        private void btnSearchBIter_Click(object sender, RoutedEventArgs e)
-        {
-            // validate integer input
-            if (!int.TryParse(txtSearchB.Text, out int value))
-            {
-                txtStatus.Text = "Status: Enter a valid integer for Sensor B";
-                return;
-            }
-
-            // stop if no data loaded
-            if (NumberOfNodes(sensorB) < 2)
-            {
-                txtStatus.Text = "Status: Sensor B has no data loaded.";
-                return;
-            }
-
-            // binary search requires sorted data
-            if (!IsSortedByGroup(sensorB))
-            {
-                txtStatus.Text = "Status: Please sort Sensor B data first.";
-                return;
-            }
-
-            // total nodes used as search range
-            int max = NumberOfNodes(sensorB);
-
-            // start timing
-            var sw = Stopwatch.StartNew();
-
-            // run iterative search
-            int result = BinarySearchIterative(sensorB, value, 0, max);
-
-            // stop timing
-            sw.Stop();
-
-            // display ticks
-            txtTicksBIter.Text = sw.ElapsedTicks + " ticks";
-
-            // refresh list
-            DisplayListboxData(sensorB, lbSensorB);
-
-            // convert return value to insertion candidate
-            int insertionPosCandidate;
-            if (result >= 1 && result <= lbSensorB.Items.Count)
-                insertionPosCandidate = result - 1;
-            else
-                insertionPosCandidate = result;
-
-            // highlight results
-            HighlightGroup(sensorB, lbSensorB, value, insertionPosCandidate);
-        }
-
-        private void btnSearchBRec_Click(object sender, RoutedEventArgs e)
-        {
-            // validate integer input
-            if (!int.TryParse(txtSearchB.Text, out int value))
-            {
-                txtStatus.Text = "Status: Enter a valid integer for Sensor B";
-                return;
-            }
-
-            // stop if list has no data
-            if (NumberOfNodes(sensorB) < 2)
-            {
-                txtStatus.Text = "Status: Sensor B has no data loaded.";
-                return;
-            }
-
-            // binary search works only on sorted data
-            if (!IsSortedByGroup(sensorB))
-            {
-                txtStatus.Text = "Status: Please sort Sensor B data first.";
-                return;
-            }
-
-            // get total nodes for search
-            int max = NumberOfNodes(sensorB);
-
-            // start timing
-            var sw = Stopwatch.StartNew();
-
-            // run recursive search
-            int indexOrInsert = BinarySearchRecursive(sensorB, value, 0, max);
-
-            // stop timing
-            sw.Stop();
-
-            // display ticks
-            txtTicksBRec.Text = sw.ElapsedTicks + " ticks";
-
-            // refresh list
-            DisplayListboxData(sensorB, lbSensorB);
-
-            // highlight results
-            HighlightGroup(sensorB, lbSensorB, value, indexOrInsert);
-        }
-
-        // =========================================================
-        // Q4.13 – Input Validation
-        // =========================================================
-        private void IntegerOnly_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            e.Handled = !e.Text.All(char.IsDigit);
-        }
-
-        private void IntegerOnly_Pasting(object sender, DataObjectPastingEventArgs e)
-        {
-            object? data = e.DataObject.GetData(typeof(string));
-            string? text = data as string;
-
-            if (string.IsNullOrEmpty(text) || !text.All(char.IsDigit))
                 e.CancelCommand();
+                return;
+            }
+
+            string? paste = e.DataObject.GetData(typeof(string)) as string;
+
+            if (paste == null)
+            {
+                e.CancelCommand();
+                return;
+            }
+
+            string newText = tb.Text.Insert(tb.SelectionStart, paste);
+
+            int dotCount = 0;
+
+            foreach (char c in newText)
+            {
+                if (!char.IsDigit(c) && c != '.')
+                {
+                    e.CancelCommand();
+                    return;
+                }
+
+                if (c == '.')
+                    dotCount++;
+            }
+
+            if (dotCount > 1)
+            {
+                e.CancelCommand();
+                return;
+            }
+
+            int dotIndex = newText.IndexOf('.');
+
+            if (dotIndex >= 0)
+            {
+                int decimals = newText.Length - dotIndex - 1;
+
+                if (decimals > 4)
+                    e.CancelCommand();
+            }
+        }
+
+        private void Search_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is not TextBox tb) return;
+
+            if (double.TryParse(tb.Text, out double v))
+                tb.Text = Math.Round(v, 4).ToString("F4");
         }
 
         // ---------------------------------------------------------
@@ -719,6 +804,7 @@ namespace GalileoDataLab
 
             txtSearchA.Clear();
             txtSearchB.Clear();
+
             txtTicksAIter.Clear();
             txtTicksARec.Clear();
             txtTicksBIter.Clear();
