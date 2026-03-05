@@ -1,27 +1,27 @@
 ﻿using Galileo6;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 
 namespace GalileoDataLab
 {
     /// <summary>
     /// =========================================================
-    /// Student: Kate Odabas P288004
-    /// Galileo Data Processing Application
+    /// Student: Kate Odabas – P288004
     /// Units: ICTPRG535 / ICTPRG547
     ///
     /// Purpose:
-    /// - Load satellite data via Galileo6 DLL
-    /// - Store data in LinkedList<double> (Sensor A and Sensor B)
+    /// - Load 400 readings from Galileo6 DLL into LinkedList<double>
     /// - Sort using Selection Sort and Insertion Sort
-    /// - Search using Binary Search (Iterative and Recursive)
-    /// - Measure performance (Sort: milliseconds, Search: ticks)
+    /// - Search using Binary Search:
+    ///     A) Group mode (integer)    : 32 -> highlights ALL 32.xxxx
+    ///     B) Exact mode (decimal)    : 32.5000 -> highlights only 32.5000
+    /// - Measure performance:
+    ///     Sort  : milliseconds
+    ///     Search: ticks
     ///
     /// Highlight (Lecturer request):
     /// - Whole number input (32 / 32.0000): highlight ALL 32.xxxx values (integer part = 32)
@@ -48,6 +48,7 @@ namespace GalileoDataLab
         {
             const int SIZE = 400;
 
+            // Step 1: validate sigma and mu input
             if (!double.TryParse(txtSigma.Text, out double sigma) ||
                 !double.TryParse(txtMu.Text, out double mu))
             {
@@ -55,6 +56,7 @@ namespace GalileoDataLab
                 return;
             }
 
+            // Step 2: validate ranges
             if (sigma < 10 || sigma > 20)
             {
                 MessageBox.Show("Sigma must be between 10 and 20.");
@@ -67,15 +69,18 @@ namespace GalileoDataLab
                 return;
             }
 
+            // Step 3: clear previous data
             sensorA.Clear();
             sensorB.Clear();
 
-            ReadData galileo = new ReadData();
+            // Step 4: create Galileo instance inside this method (required)
+            ReadData g = new ReadData();
 
+            // Step 5: load 400 values into each LinkedList
             for (int i = 0; i < SIZE; i++)
             {
-                sensorA.AddLast(galileo.SensorA(mu, sigma));
-                sensorB.AddLast(galileo.SensorB(mu, sigma));
+                sensorA.AddLast(g.SensorA(mu, sigma));
+                sensorB.AddLast(g.SensorB(mu, sigma));
             }
         }
 
@@ -85,8 +90,11 @@ namespace GalileoDataLab
         private int NumberOfNodes(LinkedList<double> list)
         {
             int count = 0;
+
+            // Walk node-by-node and count manually
             for (var node = list.First; node != null; node = node.Next)
                 count++;
+
             return count;
         }
 
@@ -95,9 +103,12 @@ namespace GalileoDataLab
         // =========================================================
         private void DisplayListboxData(LinkedList<double> list, ListBox target)
         {
+            // Step 1: clear old display
             target.Items.Clear();
-            foreach (double value in list)
-                target.Items.Add(value.ToString("F4"));
+
+            // Step 2: add formatted values (4 decimals)
+            foreach (double v in list)
+                target.Items.Add(v.ToString("F4"));
         }
 
         // =========================================================
@@ -110,6 +121,7 @@ namespace GalileoDataLab
             var a = sensorA.First;
             var b = sensorB.First;
 
+            // Show values side-by-side
             while (a != null && b != null)
             {
                 lvSensors.Items.Add(new
@@ -135,6 +147,7 @@ namespace GalileoDataLab
             ShowAllSensorData();
 
             ResetUiAfterLoad();
+
             txtStatus.Text = "Status: Data loaded successfully";
         }
 
@@ -148,10 +161,12 @@ namespace GalileoDataLab
             int max = NumberOfNodes(list);
             if (max < 2) return false;
 
+            // outer loop selects current position
             for (int i = 0; i < max - 1; i++)
             {
                 int min = i;
 
+                // search remaining list for smaller value
                 for (int j = i + 1; j < max; j++)
                 {
                     if (list.ElementAt(j) < list.ElementAt(min))
@@ -225,7 +240,10 @@ namespace GalileoDataLab
         // =========================================================
         private int BinarySearchIterative(LinkedList<double> list, int searchNumber, int minimum, int maximum)
         {
-            while (minimum <= maximum - 1)
+            var first = list.First;
+            if (first == null) return false;
+
+            if (exactDecimal)
             {
                 int middle = (minimum + maximum) / 2;
                 int middleNumber = (int)Math.Floor(list.ElementAt(middle));
@@ -249,7 +267,7 @@ namespace GalileoDataLab
         // =========================================================
         public int BinarySearchRecursive(LinkedList<double> list, int searchNumber, int minimum, int maximum)
         {
-            if (minimum <= maximum - 1)
+            while (min <= max - 1)
             {
                 int middle = (minimum + maximum) / 2;
                 int middleNumber = (int)Math.Floor(list.ElementAt(middle));
@@ -292,7 +310,7 @@ namespace GalileoDataLab
         // - numberPart: integer part (32.1234 -> 32)
         // - whole: true if input is effectively integer
         // =========================================================
-        private bool TryParseSearch(TextBox txt, out double rounded4, out int numberPart, out bool whole)
+        private void HighlightGroup(LinkedList<double> list, ListBox lb, int target, int insertionPosCandidate)
         {
             rounded4 = 0;
             numberPart = 0;
@@ -328,7 +346,8 @@ namespace GalileoDataLab
                 }
             }
 
-            if (first != -1)
+            // if at least one match was found
+            if (firstMatchIndex != -1)
             {
                 lb.ScrollIntoView(lb.Items[first]);
                 txtStatus.Text = $"Status: Found {targetNumber}";
@@ -434,6 +453,7 @@ namespace GalileoDataLab
         // =========================================================
         // SEARCH BUTTONS
         // =========================================================
+
         private void btnSearchAIter_Click(object sender, RoutedEventArgs e)
         {
             if (!TryParseSearch(txtSearchA, out double target4, out int numberPart, out bool whole))
@@ -448,7 +468,8 @@ namespace GalileoDataLab
                 return;
             }
 
-            if (!Sorted(sensorA))
+            // Step 3: stop if data is not sorted (binary search will be wrong)
+            if (!IsSortedByGroup(sensorA))
             {
                 txtStatus.Text = "Status: Please sort Sensor A first.";
                 return;
@@ -799,8 +820,8 @@ namespace GalileoDataLab
         // ---------------------------------------------------------
         private void ResetUiAfterLoad()
         {
-            ClearAll(lbSensorA);
-            ClearAll(lbSensorB);
+            lbSensorA.SelectedItems.Clear();
+            lbSensorB.SelectedItems.Clear();
 
             txtSearchA.Clear();
             txtSearchB.Clear();
@@ -814,6 +835,72 @@ namespace GalileoDataLab
             txtMsInsA.Clear();
             txtMsSelB.Clear();
             txtMsInsB.Clear();
+        }
+
+        // =========================================================
+        // TEST HELPER – Highlight Logic 
+        //
+        // Rule (matches lecturer requirement):
+        // - Group = integer part of value (32.1234 → 32)
+        // - If found → return ALL matching indices
+        // - If not found → return closest index
+        // - If equal distance (tie) → return two indices
+        //
+        // This method does NOT modify UI elements.
+        // =========================================================
+        public static (List<int> Indices, string Message) GetHighlightIndices(
+            LinkedList<double> list,
+            int target,
+            int insertion)
+        {
+            List<int> indices = new List<int>();
+
+            // ---------- A) FOUND: return all indices where group == target ----------
+            int idx = 0;
+            for (var node = list.First; node != null; node = node.Next, idx++)
+            {
+                int group = (int)node.Value;
+                if (group == target)
+                    indices.Add(idx);
+            }
+
+            if (indices.Count > 0)
+                return (indices, $"FOUND {target}");
+
+            // ---------- B) NOT FOUND: return closest group index(es) ----------
+            int count = list.Count;
+            if (count == 0)
+                return (new List<int>(), "NOT FOUND (empty list)");
+
+            // Clamp insertion position
+            if (insertion < 0) insertion = 0;
+            if (insertion > count) insertion = count;
+
+            int right = insertion;
+            int left = insertion - 1;
+
+            // Clamp both sides
+            if (right < 0) right = 0;
+            if (right > count - 1) right = count - 1;
+
+            if (left < 0) left = 0;
+            if (left > count - 1) left = count - 1;
+
+            int leftGroup = (int)list.ElementAt(left);
+            int rightGroup = (int)list.ElementAt(right);
+
+            int leftDiff = Math.Abs(target - leftGroup);
+            int rightDiff = Math.Abs(target - rightGroup);
+
+            // Tie -> return both
+            if (leftDiff == rightDiff && left != right)
+                return (new List<int> { left, right }, $"NOT FOUND {target} (tie {leftGroup}/{rightGroup})");
+
+            // Closest single
+            if (leftDiff < rightDiff)
+                return (new List<int> { left }, $"NOT FOUND {target} (closest {leftGroup})");
+
+            return (new List<int> { right }, $"NOT FOUND {target} (closest {rightGroup})");
         }
     }
 }
