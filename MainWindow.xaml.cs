@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace GalileoDataLab
 {
@@ -152,6 +153,26 @@ namespace GalileoDataLab
         }
 
         // =========================================================
+        // Algorithm Time Complexity (Big-O)
+        //
+        // Operation                    Complexity
+        // ---------------------------------------------------------
+        // Data Loading                 O(n)
+        // Displaying Data              O(n)
+        // Sorted Check                 O(n)
+        // Highlighting Results         O(n)
+        //
+        // Selection Sort               O(n^2)
+        // Insertion Sort               O(n^2)
+        //
+        // Binary Search                O(log n)
+        //
+
+
+
+
+
+        // =========================================================
         // Q4.7 – SelectionSort()
         // =========================================================
         private bool SelectionSort(LinkedList<double> list)
@@ -161,12 +182,10 @@ namespace GalileoDataLab
             int max = NumberOfNodes(list);
             if (max < 2) return false;
 
-            // outer loop selects current position
             for (int i = 0; i < max - 1; i++)
             {
                 int min = i;
 
-                // search remaining list for smaller value
                 for (int j = i + 1; j < max; j++)
                 {
                     if (list.ElementAt(j) < list.ElementAt(min))
@@ -240,16 +259,15 @@ namespace GalileoDataLab
         // =========================================================
         private int BinarySearchIterative(LinkedList<double> list, int searchNumber, int minimum, int maximum)
         {
-            var first = list.First;
-            if (first == null) return false;
+            if (list.First == null) return minimum;
 
-            if (exactDecimal)
+            while (minimum <= maximum - 1)
             {
                 int middle = (minimum + maximum) / 2;
                 int middleNumber = (int)Math.Floor(list.ElementAt(middle));
 
                 if (searchNumber == middleNumber)
-                    return middle + 1;
+                    return middle + 1; // 1-based
 
                 if (searchNumber < middleNumber)
                     maximum = middle - 1;
@@ -257,7 +275,7 @@ namespace GalileoDataLab
                     minimum = middle + 1;
             }
 
-            return minimum;
+            return minimum; // insertion position
         }
 
         // =========================================================
@@ -267,7 +285,7 @@ namespace GalileoDataLab
         // =========================================================
         public int BinarySearchRecursive(LinkedList<double> list, int searchNumber, int minimum, int maximum)
         {
-            while (min <= max - 1)
+            if (minimum <= maximum - 1)
             {
                 int middle = (minimum + maximum) / 2;
                 int middleNumber = (int)Math.Floor(list.ElementAt(middle));
@@ -281,9 +299,8 @@ namespace GalileoDataLab
                 return BinarySearchRecursive(list, searchNumber, middle + 1, maximum);
             }
 
-            return minimum;
+            return minimum; // insertion position
         }
-
         // =========================================================
         // Sorted check
         // =========================================================
@@ -310,7 +327,7 @@ namespace GalileoDataLab
         // - numberPart: integer part (32.1234 -> 32)
         // - whole: true if input is effectively integer
         // =========================================================
-        private void HighlightGroup(LinkedList<double> list, ListBox lb, int target, int insertionPosCandidate)
+        private bool TryParseSearch(TextBox txt, out double rounded4, out int numberPart, out bool whole)
         {
             rounded4 = 0;
             numberPart = 0;
@@ -346,8 +363,7 @@ namespace GalileoDataLab
                 }
             }
 
-            // if at least one match was found
-            if (firstMatchIndex != -1)
+            if (first != -1)
             {
                 lb.ScrollIntoView(lb.Items[first]);
                 txtStatus.Text = $"Status: Found {targetNumber}";
@@ -468,8 +484,7 @@ namespace GalileoDataLab
                 return;
             }
 
-            // Step 3: stop if data is not sorted (binary search will be wrong)
-            if (!IsSortedByGroup(sensorA))
+            if (!Sorted(sensorA))
             {
                 txtStatus.Text = "Status: Please sort Sensor A first.";
                 return;
